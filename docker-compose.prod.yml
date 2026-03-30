@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: smartoffice-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: smartoffice
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+    networks:
+      - smartoffice-network
+
+  redis:
+    image: redis:7
+    container_name: smartoffice-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+    networks:
+      - smartoffice-network
+
+  nginx:
+    image: nginx:latest
+    container_name: smartoffice-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    restart: always
+    networks:
+      - smartoffice-network
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  smartoffice-network:
+    external: true

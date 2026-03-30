@@ -1,0 +1,16 @@
+# docker-compose.yml
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: smartoffice-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: smartoffice
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: redis:7
+    container_name: smartoffice-redis
+    ports:
+      - "6379:6379"
