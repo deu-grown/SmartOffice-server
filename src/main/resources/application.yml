@@ -26,3 +26,8 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  secret: SmartOfficeSecretKeyForJwtTokenGenerationMustBe256BitsLongAtLeast
+  access-token-expiration: 1800000    # 30분
+  refresh-token-expiration: 604800000  # 7일
