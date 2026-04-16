@@ -1,5 +1,6 @@
 package com.grown.smartoffice.domain.user.dto;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -14,7 +15,7 @@ public class UserUpdateRequest {
     @Size(max = 50, message = "이름은 50자 이하여야 합니다.")
     private String name;
 
-    @Size(max = 20, message = "권한 값이 올바르지 않습니다.")
+    @Pattern(regexp = "ADMIN|USER", message = "역할은 ADMIN 또는 USER여야 합니다.")
     private String role;
 
     @Size(max = 50)
