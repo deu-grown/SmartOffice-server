@@ -42,4 +42,9 @@ public class Department {
         this.deptName = deptName;
         this.deptDescription = deptDescription;
     }
+
+    public void update(String deptName, String deptDescription) {
+        this.deptName = deptName;
+        this.deptDescription = deptDescription;
+    }
 }

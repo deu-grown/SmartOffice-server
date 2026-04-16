@@ -30,6 +30,12 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
     DUPLICATE_EMPLOYEE_NUMBER(409, "이미 사용 중인 사번입니다."),
     DUPLICATE_NFC_CARD(409, "이미 등록된 NFC 카드 UID입니다."),
+    DUPLICATE_DEPARTMENT_NAME(409, "이미 존재하는 부서명입니다."),
+    DEPARTMENT_HAS_USERS(409, "소속 직원이 존재하여 삭제할 수 없습니다."),
+    USER_ALREADY_INACTIVE(409, "이미 퇴사 처리된 직원입니다."),
+
+    // ── 422 Unprocessable Entity ─────────────────────────
+    WRONG_PASSWORD(422, "현재 비밀번호가 일치하지 않습니다."),
 
     // ── 500 Internal Server Error ────────────────────────
     INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다.");

@@ -87,6 +87,27 @@ public class User implements UserDetails {
         this.hiredAt = hiredAt;
     }
 
+    // ── 비즈니스 메서드 ─────────────────────────────────────
+
+    public void updateByAdmin(String employeeName, UserRole role, String position,
+                               Department department, String phone, LocalDate hiredAt) {
+        if (employeeName != null) this.employeeName = employeeName;
+        if (role != null)         this.role = role;
+        if (position != null)     this.position = position;
+        if (department != null)   this.department = department;
+        if (phone != null)        this.phone = phone;
+        if (hiredAt != null)      this.hiredAt = hiredAt;
+    }
+
+    public void updateByMe(String phone, String encodedPassword) {
+        if (phone != null)           this.phone = phone;
+        if (encodedPassword != null) this.password = encodedPassword;
+    }
+
+    public void deactivate() {
+        this.status = UserStatus.INACTIVE;
+    }
+
     // ── UserDetails 구현 ──────────────────────────────────
 
     @Override
