@@ -6,5 +6,8 @@ reviews:
   auto_review:
     enabled: true
     drafts: false        # Draft PR은 자동 리뷰 스킵 (수동으로 @coderabbitai review 호출)
+    base_branches:
+      - main
+      - develop
   path_filters:
     - "!docs/api-spec/**"  # 노션 내보내기 파일 — 리뷰 제외
