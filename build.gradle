@@ -34,6 +34,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.1'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
@@ -53,6 +56,11 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+		// 기본값 false — CI에서 민감 정보 노출 방지
+		// 활성화: ./gradlew test -PenableTestStdout
+		showStandardStreams = project.hasProperty('enableTestStdout')
+	}
 }
 
 jar {
