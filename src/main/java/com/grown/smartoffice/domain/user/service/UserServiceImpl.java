@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
-        // 초기 비밀번호 = 사번
+        // 초기 비밀번호 = 사번 (직원은 첫 로그인 후 반드시 비밀번호를 변경해야 합니다)
         String encodedPassword = passwordEncoder.encode(request.getEmployeeNumber());
 
         User user = User.builder()
