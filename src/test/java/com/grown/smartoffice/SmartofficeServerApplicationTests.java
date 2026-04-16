@@ -9,5 +9,4 @@ class SmartofficeServerApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

@@ -26,3 +26,10 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  # 운영 환경: JWT_SECRET 환경변수로 주입 (절대 하드코딩 금지)
+  # 로컬 개발: application-local.yml 에서 오버라이드
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000    # 30분
+  refresh-token-expiration: 604800000  # 7일
