@@ -41,25 +41,17 @@ public class SecurityConfig {
                     .authenticationEntryPoint(jwtAuthenticationEntryPoint)  // 401
                     .accessDeniedHandler(jwtAccessDeniedHandler))            // 403
             .authorizeHttpRequests(auth -> auth
-                    // 인증 불필요
                     .requestMatchers("/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/refresh").permitAll()
-                    .requestMatchers("/h2-console/**").permitAll()           // 로컬 개발용
                     .requestMatchers("/actuator/health").permitAll()
-                    // 그 외 모든 요청 인증 필요
                     .anyRequest().authenticated()
             )
-            // H2 콘솔 iframe 허용 (로컬 개발용)
-            .headers(headers -> headers
-                    .frameOptions(frame -> frame.sameOrigin()))
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            // @Bean 없이 직접 생성 → 서블릿 컨테이너 이중 등록 방지
+            .addFilterBefore(
+                    new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
+                    UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
     }
 
     @Bean

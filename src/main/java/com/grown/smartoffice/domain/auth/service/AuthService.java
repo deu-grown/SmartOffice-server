@@ -39,12 +39,13 @@ public class AuthService {
         User user = userRepository.findByEmployeeEmailWithDept(request.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
-        }
-
+        // 퇴사 계정 확인을 먼저 → 비밀번호 검증 전에 차단해 타이밍 어택 방지
         if (user.getStatus() == UserStatus.INACTIVE) {
             throw new CustomException(ErrorCode.ACCOUNT_INACTIVE);
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         String accessToken  = jwtTokenProvider.generateAccessToken(user.getEmployeeEmail(), user.getRole().name());
@@ -78,6 +79,7 @@ public class AuthService {
 
     // ── 로그아웃 ──────────────────────────────────────────
 
+    // @Transactional 불필요 — Redis 연산만 수행하며 DB 트랜잭션이 필요없음
     public void logout(String email) {
         redisTemplate.delete(REFRESH_PREFIX + email);
         log.debug("[Auth] 로그아웃 처리 완료: {}", email);

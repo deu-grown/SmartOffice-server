@@ -28,7 +28,6 @@ public class AuthController {
     /** POST /api/v1/auth/logout — 로그아웃 */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestBody @Valid LogoutRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         authService.logout(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("로그아웃 되었습니다."));

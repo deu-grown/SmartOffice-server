@@ -1,6 +1,7 @@
 package com.grown.smartoffice.global.exception;
 
 import com.grown.smartoffice.global.common.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,6 +9,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -22,14 +25,27 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(e.getMessage()));
     }
 
-    /** @Valid 검증 실패 (400) */
+    /** @Valid — @RequestBody 검증 실패 (400): 모든 에러 메시지 반환 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
-                .findFirst()
-                .orElse("입력값이 올바르지 않습니다.");
+                .collect(Collectors.joining("; "));
+        if (message.isBlank()) {
+            message = "입력값이 올바르지 않습니다.";
+        }
         log.warn("[Validation] {}", message);
+        return ResponseEntity.badRequest().body(ApiResponse.error(message));
+    }
+
+    /** @Validated — @PathVariable / @RequestParam 검증 실패 (400) */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+                .map(cv -> cv.getMessage())
+                .findFirst()
+                .orElse("잘못된 요청 파라미터입니다.");
+        log.warn("[ConstraintViolation] {}", message);
         return ResponseEntity.badRequest().body(ApiResponse.error(message));
     }
 

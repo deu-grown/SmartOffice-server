@@ -15,7 +15,7 @@ services:
     image: redis:7
     container_name: smartoffice-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"   # 로컬호스트에서만 접근 가능 (외부 노출 방지)
     volumes:
       - redis-data:/data
 

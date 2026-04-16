@@ -4,6 +4,7 @@ import com.grown.smartoffice.domain.department.dto.*;
 import com.grown.smartoffice.domain.department.entity.Department;
 import com.grown.smartoffice.domain.department.repository.DepartmentRepository;
 import com.grown.smartoffice.domain.user.entity.UserStatus;
+import com.grown.smartoffice.domain.user.repository.UserRepository;
 import com.grown.smartoffice.global.exception.CustomException;
 import com.grown.smartoffice.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -11,23 +12,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
 
     // ── 부서 목록 조회 ─────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
     public List<DepartmentListResponse> getDepartments() {
+        // 단일 집계 쿼리로 N+1 방지
+        Map<Long, Long> countMap = userRepository.getActiveCountByDeptId();
+
         return departmentRepository.findAllByOrderByCreatedAtAsc().stream()
-                .map(dept -> {
-                    long count = departmentRepository.countByDeptIdAndStatus(dept.getDeptId(), UserStatus.ACTIVE);
-                    return DepartmentListResponse.of(dept, count);
-                })
+                .map(dept -> DepartmentListResponse.of(
+                        dept,
+                        countMap.getOrDefault(dept.getDeptId(), 0L)))
                 .toList();
     }
 
@@ -73,7 +78,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         Department department = departmentRepository.findById(deptId)
                 .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
-        long userCount = departmentRepository.countByDeptIdAndStatus(deptId, UserStatus.ACTIVE);
+        long userCount = userRepository.countByDeptIdAndStatus(deptId, UserStatus.ACTIVE);
         if (userCount > 0) {
             throw new CustomException(ErrorCode.DEPARTMENT_HAS_USERS);
         }

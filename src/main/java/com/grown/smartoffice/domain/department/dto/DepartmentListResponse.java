@@ -13,7 +13,7 @@ public class DepartmentListResponse {
     private Long id;
     private String name;
     private String description;
-    private int userCount;
+    private long userCount;
     private LocalDateTime createdAt;
 
     public static DepartmentListResponse of(Department department, long userCount) {
@@ -21,7 +21,7 @@ public class DepartmentListResponse {
                 .id(department.getDeptId())
                 .name(department.getDeptName())
                 .description(department.getDeptDescription())
-                .userCount((int) userCount)
+                .userCount(userCount)
                 .createdAt(department.getCreatedAt())
                 .build();
     }

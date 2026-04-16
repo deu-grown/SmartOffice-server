@@ -1,5 +1,6 @@
 package com.grown.smartoffice.util;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 class BcryptHashGeneratorTest {
 
     @Test
+    @Disabled("V2 seed SQL 해시 생성용 유틸 — CI에서 실행 불필요")
     void printAdminPasswordHash() {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hash = encoder.encode("EMP001");

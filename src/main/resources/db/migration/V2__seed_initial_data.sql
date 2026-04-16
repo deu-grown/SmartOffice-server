@@ -20,7 +20,9 @@ VALUES
 INSERT INTO users (dept_id, employee_number, employee_name, employee_email,
                    password, role, position, phone, status, hired_at, created_at, updated_at)
 VALUES (
-    (SELECT dept_id FROM departments WHERE dept_name = '개발팀'),
+    (SELECT dept_id
+     FROM departments
+     WHERE dept_name = '개발팀'),
     'EMP001',
     '관리자',
     'admin@grown.com',

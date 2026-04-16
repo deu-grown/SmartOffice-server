@@ -1,12 +1,12 @@
 package com.grown.smartoffice.domain.user.service;
 
 import com.grown.smartoffice.domain.user.dto.*;
-
-import java.util.List;
+import com.grown.smartoffice.global.common.PageResponse;
 
 public interface UserService {
 
-    List<UserListItemResponse> getUsers(Long departmentId, String status, String keyword);
+    PageResponse<UserListItemResponse> getUsers(Long departmentId, String status, String keyword,
+                                                int page, int size);
 
     UserCreateResponse createUser(UserCreateRequest request);
 

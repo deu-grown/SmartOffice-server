@@ -1,5 +1,7 @@
 package com.grown.smartoffice.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grown.smartoffice.global.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
@@ -12,6 +14,8 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
@@ -19,7 +23,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(
-                "{\"code\":\"error\",\"message\":\"인증이 필요합니다.\",\"data\":null}"
+                objectMapper.writeValueAsString(ApiResponse.error("인증이 필요합니다."))
         );
     }
 }

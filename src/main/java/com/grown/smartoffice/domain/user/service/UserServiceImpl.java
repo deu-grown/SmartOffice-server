@@ -7,15 +7,17 @@ import com.grown.smartoffice.domain.user.entity.User;
 import com.grown.smartoffice.domain.user.entity.UserRole;
 import com.grown.smartoffice.domain.user.entity.UserStatus;
 import com.grown.smartoffice.domain.user.repository.UserRepository;
+import com.grown.smartoffice.global.common.PageResponse;
 import com.grown.smartoffice.global.exception.CustomException;
 import com.grown.smartoffice.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserListItemResponse> getUsers(Long departmentId, String status, String keyword) {
+    public PageResponse<UserListItemResponse> getUsers(Long departmentId, String status,
+                                                       String keyword, int page, int size) {
         UserStatus userStatus = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -38,9 +41,13 @@ public class UserServiceImpl implements UserService {
                 throw new CustomException(ErrorCode.INVALID_INPUT);
             }
         }
-        return userRepository.findAllWithFilters(departmentId, userStatus, keyword).stream()
-                .map(UserListItemResponse::from)
-                .toList();
+
+        var pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+
+        return PageResponse.from(
+                userRepository.findAllWithFilters(departmentId, userStatus, keyword, pageable)
+                              .map(UserListItemResponse::from)
+        );
     }
 
     // ── 직원 등록 ──────────────────────────────────────────
@@ -55,11 +62,9 @@ public class UserServiceImpl implements UserService {
             throw new CustomException(ErrorCode.DUPLICATE_EMPLOYEE_NUMBER);
         }
 
-        Department department = null;
-        if (request.getDepartmentId() != null) {
-            department = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
-        }
+        // @NotNull 검증 통과 후 진입 — departmentId는 null 불가
+        Department department = departmentRepository.findById(request.getDepartmentId())
+                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         UserRole role;
         try {
@@ -81,7 +86,7 @@ public class UserServiceImpl implements UserService {
                 .position(request.getPosition())
                 .phone(request.getPhone())
                 .status(UserStatus.ACTIVE)
-                .hiredAt(request.getHiredAt() != null ? request.getHiredAt() : LocalDate.now())
+                .hiredAt(request.getHiredAt())
                 .build();
 
         return UserCreateResponse.from(userRepository.save(user));

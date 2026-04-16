@@ -33,10 +33,12 @@ public class UserCreateRequest {
     @Size(max = 50)
     private String position;
 
+    @NotNull(message = "부서 ID는 필수입니다.")
     private Long departmentId;
 
     @Size(max = 20)
     private String phone;
 
+    @NotNull(message = "입사일은 필수입니다.")
     private LocalDate hiredAt;
 }

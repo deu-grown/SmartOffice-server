@@ -104,6 +104,10 @@ CREATE TABLE `access_logs` (
     CONSTRAINT FK_ZONES_TO_ACCESS_LOGS FOREIGN KEY (`zone_id`) REFERENCES `zones` (`zone_id`)
 );
 
+-- users 테이블 인덱스 (status 필터, 부서+status 복합 조회 최적화)
+CREATE INDEX idx_users_status ON `users` (`status`);
+CREATE INDEX idx_users_dept_status ON `users` (`dept_id`, `status`);
+
 CREATE TABLE `attendance` (
     `attendance_id`     BIGINT       NOT NULL AUTO_INCREMENT,
     `user_id`           BIGINT       NOT NULL,
@@ -200,6 +204,9 @@ CREATE TABLE `sensor_logs` (
     CONSTRAINT FK_ZONES_TO_SENSOR_LOGS FOREIGN KEY (`zone_id`) REFERENCES `zones` (`zone_id`),
     CONSTRAINT FK_DEVICES_TO_SENSOR_LOGS FOREIGN KEY (`devices_id`) REFERENCES `devices` (`devices_id`)
 );
+
+-- attendance 조회 최적화 (user_id + work_date 복합 인덱스)
+CREATE INDEX idx_attendance_user_date ON `attendance` (`user_id`, `work_date`);
 
 CREATE TABLE `control_commands` (
     `control_id`      BIGINT      NOT NULL AUTO_INCREMENT,

@@ -2,6 +2,7 @@ package com.grown.smartoffice.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +77,8 @@ public class JwtTokenProvider {
             log.warn("[JWT] 지원하지 않는 토큰: {}", e.getMessage());
         } catch (MalformedJwtException e) {
             log.warn("[JWT] 잘못된 형식의 토큰: {}", e.getMessage());
+        } catch (SecurityException e) {
+            log.warn("[JWT] 서명 검증 실패: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.warn("[JWT] 빈 토큰: {}", e.getMessage());
         }

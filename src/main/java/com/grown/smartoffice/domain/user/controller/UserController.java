@@ -3,6 +3,7 @@ package com.grown.smartoffice.domain.user.controller;
 import com.grown.smartoffice.domain.user.dto.*;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.ApiResponse;
+import com.grown.smartoffice.global.common.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,8 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -21,16 +20,18 @@ public class UserController {
 
     private final UserService userService;
 
-    /** 전체 직원 목록 조회 */
+    /** 전체 직원 목록 조회 (페이지네이션) */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserListItemResponse>>> getUsers(
+    public ResponseEntity<ApiResponse<PageResponse<UserListItemResponse>>> getUsers(
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 ApiResponse.success("정상 조회되었습니다.",
-                        userService.getUsers(departmentId, status, keyword)));
+                        userService.getUsers(departmentId, status, keyword, page, size)));
     }
 
     /** 직원 등록 */

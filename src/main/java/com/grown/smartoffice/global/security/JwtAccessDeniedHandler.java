@@ -1,5 +1,7 @@
 package com.grown.smartoffice.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grown.smartoffice.global.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +14,8 @@ import java.io.IOException;
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
@@ -19,7 +23,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(
-                "{\"code\":\"error\",\"message\":\"접근 권한이 없습니다.\",\"data\":null}"
+                objectMapper.writeValueAsString(ApiResponse.error("접근 권한이 없습니다."))
         );
     }
 }

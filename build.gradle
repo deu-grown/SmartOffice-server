@@ -57,7 +57,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 	testLogging {
-		showStandardStreams = true
+		// 기본값 false — CI에서 민감 정보 노출 방지
+		// 활성화: ./gradlew test -PenableTestStdout
+		showStandardStreams = project.hasProperty('enableTestStdout')
 	}
 }
 
