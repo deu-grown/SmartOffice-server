@@ -8,9 +8,17 @@ services:
       MYSQL_DATABASE: smartoffice
     ports:
       - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
 
   redis:
     image: redis:7
     container_name: smartoffice-redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
