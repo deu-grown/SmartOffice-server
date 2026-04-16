@@ -35,7 +35,7 @@
 
 ## 아키텍처
 
-```
+```text
 RPi5 (Python + SQLite 캐싱)
   → MQTT (Mosquitto, QoS 1, SSL/TLS)
     → Spring Boot API (AWS EC2)
@@ -46,7 +46,7 @@ RPi5 (Python + SQLite 캐싱)
 
 ### MQTT 토픽 구조
 
-```
+```text
 smartoffice/{zone_id}/{sensor_type}     # 센서 데이터
 smartoffice/{zone_id}/access            # 출입 이벤트
 smartoffice/{zone_id}/command           # 제어 명령 (서버 → RPi)
@@ -69,7 +69,7 @@ smartoffice/{zone_id}/command           # 제어 명령 (서버 → RPi)
 
 ### 핵심 데이터 흐름
 
-```
+```text
 NFC 태그
   → access_logs (원시 로그)
     → attendance (당일 배치 집계, 매일 00:05)
