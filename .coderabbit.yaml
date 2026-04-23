@@ -4,7 +4,7 @@ reviews:
   profile: "assertive"
   review_status: true
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false        # Draft PR은 자동 리뷰 스킵 (수동으로 @coderabbitai review 호출)
     base_branches:
       - develop
