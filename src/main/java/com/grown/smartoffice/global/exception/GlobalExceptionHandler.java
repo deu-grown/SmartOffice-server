@@ -3,8 +3,10 @@ package com.grown.smartoffice.global.exception;
 import com.grown.smartoffice.global.common.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,6 +56,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException e) {
         log.warn("[NotReadable] {}", e.getMessage());
         return ResponseEntity.badRequest().body(ApiResponse.error("요청 본문을 읽을 수 없습니다."));
+    }
+
+    /**
+     * @PreAuthorize 거부 (403) — Spring Security 의 MethodSecurity 에서 던짐.
+     * catch-all 핸들러가 500 으로 잡기 전에 명시적으로 처리한다.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e) {
+        log.warn("[AccessDenied] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED.getMessage()));
     }
 
     /** 그 외 모든 예외 (500) */
