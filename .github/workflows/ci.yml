@@ -20,6 +20,5 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # TODO: 테스트 코드 작성 후 -x test 제거
       - name: Build and Test
-        run: ./gradlew build -x test
+        run: ./gradlew build
