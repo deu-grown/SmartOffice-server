@@ -45,6 +45,7 @@ services:
       - "8883:8883"
     volumes:
       - ./docker/mosquitto/mosquitto-prod.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./docker/mosquitto/passwd:/mosquitto/config/passwd:ro
       - ${MQTT_CERT_DIR}:/mosquitto/certs:ro
       - mosquitto-data:/mosquitto/data
       - mosquitto-log:/mosquitto/log
