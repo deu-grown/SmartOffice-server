@@ -21,12 +21,15 @@ public enum ErrorCode {
     ACCOUNT_INACTIVE(403, "퇴사 처리된 계정입니다."),
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
     REFRESH_TOKEN_EXPIRED(403, "Refresh Token이 만료되었습니다. 다시 로그인해주세요."),
+    NFC_CARD_EXPIRED(403, "만료된 NFC 카드입니다."),
 
     // ── 404 Not Found ────────────────────────────────────
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
     DEPARTMENT_NOT_FOUND(404, "부서를 찾을 수 없습니다."),
     ZONE_NOT_FOUND(404, "구역을 찾을 수 없습니다."),
     PARENT_ZONE_NOT_FOUND(404, "상위 구역을 찾을 수 없습니다."),
+    DEVICE_NOT_FOUND(404, "장치를 찾을 수 없습니다."),
+    NFC_CARD_NOT_FOUND(404, "등록되지 않은 NFC 카드입니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),

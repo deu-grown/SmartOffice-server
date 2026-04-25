@@ -27,6 +27,13 @@ spring:
 server:
   port: 8080
 
+mqtt:
+  enabled: false
+  broker-url: tcp://localhost:1883
+  client-id: smartoffice-server
+  topic:
+    access: smartoffice/+/access
+
 springdoc:
   api-docs:
     path: /v3/api-docs
