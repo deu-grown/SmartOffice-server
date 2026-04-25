@@ -31,6 +31,9 @@ public enum ErrorCode {
     DEVICE_NOT_FOUND(404, "장치를 찾을 수 없습니다."),
     NFC_CARD_NOT_FOUND(404, "등록되지 않은 NFC 카드입니다."),
     ATTENDANCE_NOT_FOUND(404, "근태 정보를 찾을 수 없습니다."),
+    SALARY_SETTING_NOT_FOUND(404, "급여 기준을 찾을 수 없습니다."),
+    SALARY_RECORD_NOT_FOUND(404, "급여 산출 내역을 찾을 수 없습니다."),
+    MONTHLY_ATTENDANCE_NOT_FOUND(404, "해당 월 근태 집계 데이터가 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
@@ -45,6 +48,9 @@ public enum ErrorCode {
     ZONE_HAS_CHILDREN(409, "하위 구역이 존재하여 삭제할 수 없습니다."),
     ZONE_HAS_DEVICES(409, "설치된 장치가 존재하여 삭제할 수 없습니다."),
     USER_ALREADY_INACTIVE(409, "이미 퇴사 처리된 직원입니다."),
+    SALARY_SETTING_USED(409, "이미 급여 산출에 사용된 기준으로 수정할 수 없습니다."),
+    SALARY_RECORD_ALREADY_CONFIRMED(409, "이미 확정된 급여 내역입니다."),
+    NO_APPLICABLE_SALARY_SETTING(409, "해당 직급의 적용 가능한 급여 기준이 없습니다."),
 
     // ── 422 Unprocessable Entity ─────────────────────────
     WRONG_PASSWORD(422, "현재 비밀번호가 일치하지 않습니다."),
