@@ -4,6 +4,8 @@ import com.grown.smartoffice.domain.user.dto.*;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.ApiResponse;
 import com.grown.smartoffice.global.common.PageResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Users", description = "직원 관리 (ADMIN: 전체 CRUD / EMPLOYEE: 본인 조회·수정)")
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ public class UserController {
 
     private final UserService userService;
 
-    /** 전체 직원 목록 조회 (페이지네이션) */
+    @Operation(summary = "직원 목록 조회 [ADMIN]", description = "부서·상태·키워드로 필터링된 직원 목록을 페이지네이션으로 반환합니다.")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PageResponse<UserListItemResponse>>> getUsers(
@@ -34,7 +37,7 @@ public class UserController {
                         userService.getUsers(departmentId, status, keyword, page, size)));
     }
 
-    /** 직원 등록 */
+    @Operation(summary = "직원 등록 [ADMIN]", description = "신규 직원 계정을 생성합니다. 초기 비밀번호는 사번입니다.")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserCreateResponse>> createUser(
@@ -43,7 +46,7 @@ public class UserController {
                 .body(ApiResponse.success("직원이 등록되었습니다.", userService.createUser(request)));
     }
 
-    /** 내 정보 조회 (직원) */
+    @Operation(summary = "내 정보 조회", description = "로그인한 직원 본인의 상세 정보를 반환합니다.")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserMeInfoResponse>> getMyInfo(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -52,7 +55,7 @@ public class UserController {
                         userService.getMyInfo(userDetails.getUsername())));
     }
 
-    /** 내 정보 수정 */
+    @Operation(summary = "내 정보 수정", description = "연락처·비밀번호를 변경합니다. 비밀번호 변경 시 currentPassword 필수.")
     @PostMapping("/me")
     public ResponseEntity<ApiResponse<UserMeUpdateResponse>> updateMyInfo(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -62,7 +65,7 @@ public class UserController {
                         userService.updateMyInfo(userDetails.getUsername(), request)));
     }
 
-    /** 직원 상세 조회 */
+    @Operation(summary = "직원 상세 조회 [ADMIN]")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> getUserDetail(@PathVariable Long id) {
@@ -70,7 +73,7 @@ public class UserController {
                 ApiResponse.success("정상 조회되었습니다.", userService.getUserDetail(id)));
     }
 
-    /** 직원 정보 수정 */
+    @Operation(summary = "직원 정보 수정 [ADMIN]", description = "부서·직급·역할 등 관리자가 직원 정보를 수정합니다.")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserUpdateResponse>> updateUser(
@@ -80,7 +83,7 @@ public class UserController {
                 ApiResponse.success("직원 정보가 수정되었습니다.", userService.updateUser(id, request)));
     }
 
-    /** 직원 퇴사 처리 */
+    @Operation(summary = "직원 퇴사 처리 [ADMIN]", description = "직원 상태를 INACTIVE로 변경합니다. 복구 불가.")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable Long id) {

@@ -54,4 +54,5 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e MQTT_BROKER_HOST=${{ secrets.MQTT_BROKER_HOST }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/smartoffice-server:latest
