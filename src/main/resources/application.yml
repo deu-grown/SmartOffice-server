@@ -31,6 +31,8 @@ mqtt:
   enabled: false
   broker-url: tcp://localhost:1883
   client-id: smartoffice-server
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
   topic:
     access: smartoffice/+/access
 

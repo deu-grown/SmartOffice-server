@@ -55,4 +55,6 @@ jobs:
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
               -e MQTT_BROKER_HOST=${{ secrets.MQTT_BROKER_HOST }} \
+              -e MQTT_USERNAME=${{ secrets.MQTT_USERNAME }} \
+              -e MQTT_PASSWORD=${{ secrets.MQTT_PASSWORD }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/smartoffice-server:latest
