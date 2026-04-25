@@ -41,15 +41,10 @@ AWS 콘솔 → EC2 → Security Groups → Inbound Rules → Custom TCP 8883 추
 
 ---
 
-## 4. GitHub Secrets 추가 (미완료)
+## ✅ 4. GitHub Secrets 추가 (완료)
 
-`deploy.yml`의 `docker run` 명령에 아래 줄 추가:
-
-```yaml
--e MQTT_BROKER_HOST=${{ secrets.MQTT_BROKER_HOST }} \
-```
-
-GitHub → Settings → Secrets → Actions에 `MQTT_BROKER_HOST = localhost` 등록.
+`deploy.yml`에 `-e MQTT_BROKER_HOST=${{ secrets.MQTT_BROKER_HOST }}` 추가.  
+GitHub Secrets에 `MQTT_BROKER_HOST = localhost` 등록.
 
 ---
 
