@@ -25,6 +25,11 @@ public enum ErrorCode {
     // ── 404 Not Found ────────────────────────────────────
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
     DEPARTMENT_NOT_FOUND(404, "부서를 찾을 수 없습니다."),
+    ZONE_NOT_FOUND(404, "구역을 찾을 수 없습니다."),
+    PARENT_ZONE_NOT_FOUND(404, "상위 구역을 찾을 수 없습니다."),
+
+    // ── 400 Bad Request (Zone) ────────────────────────────
+    INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
 
     // ── 409 Conflict ─────────────────────────────────────
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
@@ -32,6 +37,9 @@ public enum ErrorCode {
     DUPLICATE_NFC_CARD(409, "이미 등록된 NFC 카드 UID입니다."),
     DUPLICATE_DEPARTMENT_NAME(409, "이미 존재하는 부서명입니다."),
     DEPARTMENT_HAS_USERS(409, "소속 직원이 존재하여 삭제할 수 없습니다."),
+    DUPLICATE_ZONE_NAME(409, "동일 상위 구역 내 중복 구역명입니다."),
+    ZONE_HAS_CHILDREN(409, "하위 구역이 존재하여 삭제할 수 없습니다."),
+    ZONE_HAS_DEVICES(409, "설치된 장치가 존재하여 삭제할 수 없습니다."),
     USER_ALREADY_INACTIVE(409, "이미 퇴사 처리된 직원입니다."),
 
     // ── 422 Unprocessable Entity ─────────────────────────
