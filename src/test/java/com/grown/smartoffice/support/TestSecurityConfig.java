@@ -30,6 +30,7 @@ public class TestSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/refresh").permitAll()
+                    .requestMatchers("/api/v1/access-logs/tag").permitAll()
                     .anyRequest().authenticated()
             );
         return http.build();

@@ -31,3 +31,8 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000
+
+mqtt:
+  enabled: true
+  broker-url: ssl://${MQTT_BROKER_HOST:localhost}:8883
+  client-id: smartoffice-server-prod

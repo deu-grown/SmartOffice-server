@@ -1,3 +1,11 @@
+# docker-compose.prod.yml  — 운영 환경 전용
+# 실행: docker compose -f docker-compose.prod.yml up -d
+#
+# 필수 환경변수 (.env 또는 EC2 쉘 export):
+#   DB_PASSWORD      — MySQL root 비밀번호
+#   JWT_SECRET       — HS512 시크릿 (최소 64자)
+#   MQTT_CERT_DIR    — 호스트 측 인증서 디렉터리 절대경로 (예: /opt/smartoffice/certs)
+#                      해당 디렉터리 안에 ca.crt / server.crt / server.key 있어야 함
 services:
   mysql:
     image: mysql:8.0
@@ -10,16 +18,36 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - smartoffice-network
 
   redis:
     image: redis:7
     container_name: smartoffice-redis
+    command: redis-server --save 60 1 --loglevel warning
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
+    restart: always
+    networks:
+      - smartoffice-network
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: smartoffice-mosquitto
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./docker/mosquitto/mosquitto-prod.conf:/mosquitto/config/mosquitto.conf:ro
+      - ${MQTT_CERT_DIR}:/mosquitto/certs:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
     restart: always
     networks:
       - smartoffice-network
@@ -39,6 +67,8 @@ services:
 volumes:
   mysql-data:
   redis-data:
+  mosquitto-data:
+  mosquitto-log:
 
 networks:
   smartoffice-network:
