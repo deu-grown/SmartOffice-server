@@ -4,6 +4,7 @@ import com.grown.smartoffice.domain.accesslog.dto.TagEventRequest;
 import com.grown.smartoffice.domain.accesslog.dto.TagEventResponse;
 import com.grown.smartoffice.domain.accesslog.entity.AccessLog;
 import com.grown.smartoffice.domain.accesslog.repository.AccessLogRepository;
+import com.grown.smartoffice.domain.attendance.service.AttendanceCommandService;
 import com.grown.smartoffice.domain.device.entity.Device;
 import com.grown.smartoffice.domain.device.repository.DeviceRepository;
 import com.grown.smartoffice.domain.nfccard.entity.NfcCard;
@@ -24,6 +25,7 @@ public class AccessLogService {
     private final DeviceRepository deviceRepository;
     private final NfcCardRepository nfcCardRepository;
     private final AccessLogRepository accessLogRepository;
+    private final AttendanceCommandService attendanceCommandService;
 
     @Transactional
     public TagEventResponse processTag(TagEventRequest request) {
@@ -67,6 +69,10 @@ public class AccessLogService {
                 .taggedAt(taggedAt)
                 .build();
         accessLogRepository.save(log);
+
+        if ("APPROVED".equals(authResult)) {
+            attendanceCommandService.recordTag(card.getUser().getUserId(), taggedAt);
+        }
 
         return TagEventResponse.builder()
                 .authResult(authResult)
