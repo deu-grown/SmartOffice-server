@@ -22,6 +22,12 @@ public class MqttConfig {
     @Value("${mqtt.client-id:smartoffice-server}")
     private String clientId;
 
+    @Value("${mqtt.username:}")
+    private String username;
+
+    @Value("${mqtt.password:}")
+    private String password;
+
     @Value("${mqtt.topic.access:smartoffice/+/access}")
     private String accessTopic;
 
@@ -36,6 +42,10 @@ public class MqttConfig {
         options.setAutomaticReconnect(true);
         options.setConnectionTimeout(10);
         options.setKeepAliveInterval(60);
+        if (username != null && !username.isBlank()) {
+            options.setUserName(username);
+            options.setPassword(password.toCharArray());
+        }
 
         client.setCallback(new MqttCallback() {
             @Override
