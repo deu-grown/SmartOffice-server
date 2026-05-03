@@ -164,11 +164,14 @@ ApiResponse<T> {
 | `salary` | 급여 설정 CRUD, 월별 산출, 확정, 조회 |
 | `accesslog` | NFC 태그 처리, MQTT 수신(`AccessLogMqttListener`) |
 | `zone` | 구역 CRUD, 계층 트리 조회 |
+| `dashboard` | 전체 요약·센서 현황·근태 현황·출입 기록 API (4개) |
+| `asset` | 자산 CRUD 5개 API (자산 관리 대장) |
 
 ### 부분 구현 (Entity·Repository만 존재)
 
 - `device`: Controller/Service 미구현
 - `nfccard`: Controller/Service 미구현
+- `sensor`: SensorLog Entity + SensorLogRepository (Controller/Service 미구현)
 
 ### 미구현 (API 스펙 존재, 코드 없음)
 
@@ -178,9 +181,7 @@ ApiResponse<T> {
 | 환경 센서 | `sensor_logs` (있음) | 구역별 실시간·이력 조회 |
 | 제어 명령 | `control_commands` (있음) | 냉난방·조명 제어 |
 | 전력 관리 | `power_billing` (V4) | 5개 API (실시간·이력·월요금 산출 등) |
-| 자산 관리 | `assets` (V4) | 5개 API (CRUD — 자산 관리 대장) |
 | 주차 관리 | `parking_spots` (V4) | 7개 API (주차면 CRUD·현황·지도·IoT 상태 업데이트) |
-| 대시보드 | 별도 테이블 없음 (기존 도메인 집계) | 4개 API (전체 요약·센서 현황·근태·출입) |
 
 ---
 
@@ -189,6 +190,6 @@ ApiResponse<T> {
 1. **Sprint 1** ✅: 인증(JWT), 계정 관리, 부서/직원 CRUD
 2. **Sprint 2~4** ✅: 출입 판정(MQTT), 근태 집계 배치, 급여 설정·산출
 3. **Sprint 5** 🔲: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
-4. **Sprint 6** 🔲: 예약 관리, 전력 관리, 자산 관리 (ERD 설계 포함)
-5. **Sprint 7** 🔲: 대시보드 API, 앱 연동
+4. **Sprint 6** 🔲: 예약 관리, 전력 관리 *(자산 관리 ✅ 완료)*
+5. **Sprint 7** 🔲: 앱 연동 *(대시보드 API ✅ 완료)*
 6. **Sprint 8** 🔲: 성능 최적화, 보안 강화, 백업
