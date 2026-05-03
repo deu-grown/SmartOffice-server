@@ -11,4 +11,6 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
 
     @Query("SELECT d FROM Device d JOIN FETCH d.zone WHERE d.devicesId = :id")
     Optional<Device> findByIdWithZone(@Param("id") Long id);
+
+    long countByDeviceStatus(String deviceStatus);
 }
