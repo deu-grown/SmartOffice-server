@@ -27,6 +27,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmployeeNumber(String employeeNumber);
 
+    /** 전체 상태별 직원 수 */
+    long countByStatus(UserStatus status);
+
     /** 특정 부서의 상태별 직원 수 (단건 조회용) */
     @Query("SELECT COUNT(u) FROM User u WHERE u.department.deptId = :deptId AND u.status = :status")
     long countByDeptIdAndStatus(@Param("deptId") Long deptId, @Param("status") UserStatus status);

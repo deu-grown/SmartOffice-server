@@ -34,6 +34,7 @@ public enum ErrorCode {
     SALARY_SETTING_NOT_FOUND(404, "급여 기준을 찾을 수 없습니다."),
     SALARY_RECORD_NOT_FOUND(404, "급여 산출 내역을 찾을 수 없습니다."),
     MONTHLY_ATTENDANCE_NOT_FOUND(404, "해당 월 근태 집계 데이터가 없습니다."),
+    ASSET_NOT_FOUND(404, "자산을 찾을 수 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
@@ -51,6 +52,7 @@ public enum ErrorCode {
     SALARY_SETTING_USED(409, "이미 급여 산출에 사용된 기준으로 수정할 수 없습니다."),
     SALARY_RECORD_ALREADY_CONFIRMED(409, "이미 확정된 급여 내역입니다."),
     NO_APPLICABLE_SALARY_SETTING(409, "해당 직급의 적용 가능한 급여 기준이 없습니다."),
+    DUPLICATE_ASSET_NUMBER(409, "이미 사용 중인 자산 번호입니다."),
 
     // ── 422 Unprocessable Entity ─────────────────────────
     WRONG_PASSWORD(422, "현재 비밀번호가 일치하지 않습니다."),
