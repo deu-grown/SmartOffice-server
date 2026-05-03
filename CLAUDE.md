@@ -15,12 +15,13 @@
 - **Framework**: Spring Boot 4.0.5
 - **Build**: Gradle-Groovy
 - **패키지 루트**: `com.grown.smartoffice`
-- **DB**: MySQL 8.0 (prod) / H2 (local)
+- **DB**: MySQL 8.0 (prod·local 공통) / H2 (테스트 전용 runtimeOnly)
 - **Cache**: Redis 7
-- **ORM**: Spring Data JPA + MyBatis (복잡한 조회는 MyBatis)
+- **ORM**: Spring Data JPA (JpaRepository + @Query JPQL/nativeQuery)
 - **인증**: Spring Security + JWT (Access 30분 / Refresh 7일)
-- **마이그레이션**: Flyway
-- **IoT 통신**: MQTT (Eclipse Paho, QoS Level 1)
+- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블)
+- **IoT 통신**: MQTT (Eclipse Paho 1.2.5, QoS Level 1)
+- **API 문서**: Springdoc OpenAPI 3.0.2 (Swagger UI: `/swagger-ui.html`)
 - **인프라**: AWS EC2 t3.small, Docker, GitHub Actions CI/CD
 
 ---
@@ -56,30 +57,44 @@ smartoffice/{zone_id}/command           # 제어 명령 (서버 → RPi)
 
 ## ERD 핵심 관계 요약
 
-총 14개 테이블 / 6개 도메인 (상세 스키마는 `@docs/erd.sql` 참조)
+총 17개 테이블 / 9개 도메인 (상세 스키마는 `@docs/erd.sql` 참조)
 
-| 도메인    | 테이블                                                       |
-| --------- | ------------------------------------------------------------ |
-| 회원/인증 | `departments`, `users`, `refresh_tokens`                     |
-| 공간/장치 | `zones` (self-ref 계층), `devices`                           |
-| 출입/근태 | `nfc_cards`, `access_logs`, `attendance`, `monthly_attendance` |
-| 급여/ERP  | `salary_settings`, `salary_records`                          |
-| 환경/IoT  | `sensor_logs`, `control_commands`                            |
-| 예약      | `reservations`                                               |
+| 도메인    | 테이블 | Flyway |
+| --------- | ------ | ------ |
+| 회원/인증 | `departments`, `users`, `refresh_tokens` | V1 |
+| 공간/장치 | `zones` (self-ref 계층), `devices` | V1 |
+| 출입/근태 | `nfc_cards`, `access_logs`, `attendance`, `monthly_attendance` | V1 |
+| 급여/ERP  | `salary_settings`, `salary_records` | V1 |
+| 환경/IoT  | `sensor_logs`, `control_commands` | V1 |
+| 예약      | `reservations` | V1 |
+| 주차      | `parking_spots` | V4 |
+| 자산 관리 | `assets` | V4 |
+| 전력 관리 | `power_billing` | V4 |
 
 ### 핵심 데이터 흐름
 
 ```
 NFC 태그
   → access_logs (원시 로그)
-    → attendance (당일 배치 집계, 매일 00:05)
-      → monthly_attendance (월말 배치 집계)
+    → attendance (일별 배치 집계, 매일 00:05 — AttendanceScheduler)
+      → monthly_attendance (월별 배치 집계, 매월 1일 00:10)
         → salary_records (급여 자동 산출)
 ```
+
+### 배치 스케줄 (AttendanceScheduler)
+
+| 스케줄 | 작업 | 수동 트리거 |
+|--------|------|-------------|
+| 매일 00:05 | 전일 근태 집계 (`AttendanceBatchService.runDailyBatch`) | `POST /api/v1/attendance/batch` (ADMIN) |
+| 매월 1일 00:10 | 전월 월별 집계 (`AttendanceBatchService.runMonthlyAggregation`) | 동일 엔드포인트 |
 
 ---
 
 ## 개발 규칙
+
+### API 경로 패턴
+
+모든 REST API: `/api/v1/{resource}` (예: `/api/v1/users`, `/api/v1/attendance`)
 
 ### 공통 응답 형식
 
@@ -109,6 +124,7 @@ ApiResponse<T> {
 - 환경변수 하드코딩 절대 금지 (`.env` / `application-prod.yml` 사용)
 - ADMIN 전용 엔드포인트는 `@PreAuthorize("hasRole('ADMIN')")` 필수
 - 직원 본인 데이터 접근 시 JWT subject와 PathVariable 대조 검증
+- IoT 장치용 엔드포인트(`/api/v1/access-logs/tag`)는 인증 없이 허용 (SecurityConfig permitAll)
 
 ### 네이밍
 
@@ -121,7 +137,7 @@ ApiResponse<T> {
 ### 프로필 분리
 
 - `application.yml`: 공통 설정
-- `application-local.yml`: 로컬 개발 (H2, 로그 DEBUG)
+- `application-local.yml`: 로컬 개발 (MySQL localhost:3306, 로그 DEBUG)
 - `application-prod.yml`: 운영 (MySQL, 로그 INFO)
 
 ---
@@ -135,11 +151,44 @@ ApiResponse<T> {
 
 ---
 
+## 현재 구현 상태 (2026-05-03 기준)
+
+### 완전 구현된 도메인
+
+| 도메인 | 주요 구성요소 |
+|--------|--------------|
+| `auth` | 로그인, 로그아웃, 토큰 갱신, CustomUserDetailsService |
+| `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리 |
+| `department` | 부서 CRUD |
+| `attendance` | 태그 기록, 조회, 수동 보정, 배치 집계, 스케줄러 |
+| `salary` | 급여 설정 CRUD, 월별 산출, 확정, 조회 |
+| `accesslog` | NFC 태그 처리, MQTT 수신(`AccessLogMqttListener`) |
+| `zone` | 구역 CRUD, 계층 트리 조회 |
+
+### 부분 구현 (Entity·Repository만 존재)
+
+- `device`: Controller/Service 미구현
+- `nfccard`: Controller/Service 미구현
+
+### 미구현 (API 스펙 존재, 코드 없음)
+
+| 도메인 | ERD 테이블 | API 스펙 |
+|--------|-----------|---------|
+| 예약 관리 | `reservations` (있음) | 8개 API (생성·조회·수정·취소·NFC 체크인 등) |
+| 환경 센서 | `sensor_logs` (있음) | 구역별 실시간·이력 조회 |
+| 제어 명령 | `control_commands` (있음) | 냉난방·조명 제어 |
+| 전력 관리 | `power_billing` (V4) | 5개 API (실시간·이력·월요금 산출 등) |
+| 자산 관리 | `assets` (V4) | 5개 API (CRUD — 자산 관리 대장) |
+| 주차 관리 | `parking_spots` (V4) | 7개 API (주차면 CRUD·현황·지도·IoT 상태 업데이트) |
+| 대시보드 | 별도 테이블 없음 (기존 도메인 집계) | 4개 API (전체 요약·센서 현황·근태·출입) |
+
+---
+
 ## MVP 구현 순서 (스프린트 기준)
 
-1. **Sprint 1**: 인증(JWT), 계정 관리, 부서/직원 CRUD, NFC 카드 등록
-2. **Sprint 2~4**: 출입 판정(MQTT), 근태 집계 배치
-3. **Sprint 3**: 급여 설정, 월별 집계, 급여 자동 산출
-4. **Sprint 5**: 환경 센서 수집/저장, 냉난방 자동 제어
-5. **Sprint 6**: 대시보드/앱 연동 API
-6. **Sprint 7**: 성능 최적화, 보안 강화, 백업
+1. **Sprint 1** ✅: 인증(JWT), 계정 관리, 부서/직원 CRUD
+2. **Sprint 2~4** ✅: 출입 판정(MQTT), 근태 집계 배치, 급여 설정·산출
+3. **Sprint 5** 🔲: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
+4. **Sprint 6** 🔲: 예약 관리, 전력 관리, 자산 관리 (ERD 설계 포함)
+5. **Sprint 7** 🔲: 대시보드 API, 앱 연동
+6. **Sprint 8** 🔲: 성능 최적화, 보안 강화, 백업
