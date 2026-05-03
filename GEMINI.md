@@ -1,4 +1,4 @@
-# AGENTS.md — SmartOffice Backend
+# GEMINI.md — SmartOffice Backend
 
 ## 프로젝트 개요
 
