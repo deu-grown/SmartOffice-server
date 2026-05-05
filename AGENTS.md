@@ -19,7 +19,7 @@
 - **Cache**: Redis 7
 - **ORM**: Spring Data JPA (JpaRepository + @Query JPQL/nativeQuery)
 - **인증**: Spring Security + JWT (Access 30분 / Refresh 7일)
-- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블)
+- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터)
 - **IoT 통신**: MQTT (Eclipse Paho 1.2.5, QoS Level 1)
 - **API 문서**: Springdoc OpenAPI 3.0.2 (Swagger UI: `/swagger-ui.html`)
 - **인프라**: AWS EC2 t3.small, Docker, GitHub Actions CI/CD
@@ -151,13 +151,13 @@ ApiResponse<T> {
 
 ---
 
-## 현재 구현 상태 (2026-05-03 기준)
+## 현재 구현 상태 (2026-05-05 기준)
 
 ### 완전 구현된 도메인
 
 | 도메인 | 주요 구성요소 |
 |--------|--------------|
-| `auth` | 로그인, 로그아웃, 토큰 갱신, CustomUserDetailsService |
+| `auth` | 로그인, 로그아웃, 토큰 갱신, CustomUserDetailsService, 테스트 로그인(`TestAuthController`, `!prod` 전용) |
 | `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리 |
 | `department` | 부서 CRUD |
 | `attendance` | 태그 기록, 조회, 수동 보정, 배치 집계, 스케줄러 |
