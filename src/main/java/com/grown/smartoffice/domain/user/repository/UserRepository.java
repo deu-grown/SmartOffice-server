@@ -1,6 +1,7 @@
 package com.grown.smartoffice.domain.user.repository;
 
 import com.grown.smartoffice.domain.user.entity.User;
+import com.grown.smartoffice.domain.user.entity.UserRole;
 import com.grown.smartoffice.domain.user.entity.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmployeeEmail(String employeeEmail);
 
     boolean existsByEmployeeNumber(String employeeNumber);
+
+    Optional<User> findFirstByRoleAndStatus(UserRole role, UserStatus status);
 
     /** 전체 상태별 직원 수 */
     long countByStatus(UserStatus status);

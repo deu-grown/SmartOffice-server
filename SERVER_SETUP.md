@@ -114,7 +114,7 @@ docker compose down -v
 ```
 
 > 기본 프로필은 `local`로 설정되어 있습니다 (`application.yml: spring.profiles.active: local`).
-> Flyway가 자동으로 DB 마이그레이션(V1~V4)을 실행합니다.
+> Flyway가 자동으로 DB 마이그레이션(V1~V5)을 실행합니다.
 
 ### 실행 성공 확인
 
@@ -168,11 +168,127 @@ const baseUrl = 'http://10.0.2.2:8080';
 
 ## 8. 테스트 로그인 엔드포인트
 
-> **TODO**: V2~V3 Flyway 시드 데이터 기반의 테스트 계정 정보를 여기에 추가 예정.
->
-> - 관리자 계정 (ADMIN 역할)
-> - 일반 직원 계정 (EMPLOYEE 역할)
-> - 로그인 요청 예시 (`POST /api/v1/auth/login`)
+> **주의**: 이 엔드포인트는 `local`·`test` 프로파일에서만 활성화됩니다. `prod`에서는 404를 반환합니다.
+
+### 8-1. 엔드포인트 명세
+
+```
+POST /api/v1/auth/test-login
+Content-Type: application/json
+```
+
+**Request Body (모든 필드 optional)**
+
+| 필드 | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `email` | String | null | null이면 role에 맞는 첫 ACTIVE 계정 자동 선택 |
+| `role` | String | `"ADMIN"` | `"ADMIN"` 또는 `"USER"` |
+
+**동작 규칙**
+
+| 조건 | 결과 |
+|------|------|
+| `email` 미지정 | role에 맞는 첫 ACTIVE 계정 선택, 없으면 더미 계정 자동 생성 |
+| `email` 지정 + 계정 ACTIVE | 비밀번호 검증 없이 즉시 토큰 발급 |
+| `email` 지정 + 계정 없음 | 더미 계정 자동 생성 → `autoCreated: true` |
+| `email` 지정 + 계정 INACTIVE | `403 ACCOUNT_INACTIVE` |
+
+**Response**
+
+```json
+{
+  "code": "success",
+  "message": "테스트 로그인 성공",
+  "data": {
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci...",
+    "tokenType": "Bearer",
+    "expiresIn": 1800,
+    "autoCreated": false,
+    "user": {
+      "id": 1,
+      "name": "관리자",
+      "email": "admin@grown.com",
+      "role": "ADMIN",
+      "position": "팀장",
+      "department": "개발팀"
+    }
+  }
+}
+```
+
+### 8-2. V2·V5 시드 기반 테스트 계정
+
+| 사번 | 이름 | 이메일 | 역할 | 비밀번호 | 상태 |
+|------|------|--------|------|----------|------|
+| EMP001 | 관리자 | admin@grown.com | ADMIN | EMP001 | ACTIVE |
+| EMP002 | 이순신 | lee.sun@grown.com | USER | EMP002 | ACTIVE |
+| EMP003 | 장보고 | jang.bo@grown.com | USER | EMP003 | ACTIVE |
+| EMP004 | 세종대왕 | sejong.da@grown.com | USER | EMP004 | ACTIVE |
+| EMP005 | 문화왕 | moon.hwa@grown.com | USER | EMP005 | **INACTIVE** |
+| EMP006 | 홍길동 | hong.gildong@grown.com | USER | EMP006 | ACTIVE |
+
+### 8-3. 사용 예시
+
+**관리자 토큰 발급 (가장 간단한 방법)**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/test-login \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq '.data.accessToken'
+```
+
+**특정 사용자 토큰 발급**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/test-login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"lee.sun@grown.com","role":"USER"}' | jq '.data.accessToken'
+```
+
+**더미 계정 자동 생성 (새 이메일 지정)**
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/test-login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"newdev@test.com","role":"USER"}'
+# 응답: autoCreated: true
+```
+
+### 8-4. 프론트엔드·앱에서 토큰 발급 전체 흐름
+
+```
+1. POST /api/v1/auth/test-login  → accessToken, refreshToken 획득
+2. 이후 모든 API 요청 헤더에 포함:
+   Authorization: Bearer <accessToken>
+3. 30분 후 만료 시:
+   POST /api/v1/auth/refresh  { "refreshToken": "<refreshToken>" }
+   → 새 accessToken 발급
+```
+
+### 8-5. 더미 데이터 초기화 및 재생성
+
+DB 데이터를 완전히 초기화하고 싶을 때 (볼륨까지 삭제):
+
+```bash
+# 1. 서버 종료
+# 2. Docker 볼륨 포함 초기화
+docker compose down -v
+
+# 3. 컨테이너 재시작
+docker compose up -d
+
+# 4. 서버 재기동 (Flyway V1~V5 자동 재적용)
+./gradlew bootRun        # macOS/Linux
+./gradlew.bat bootRun    # Windows
+```
+
+볼륨 삭제 없이 데이터만 재삽입하려면 Flyway repair 후 재적용:
+
+```bash
+./gradlew flywayRepair   # checksum 오류 시에만
+./gradlew bootRun
+```
 
 ---
 
