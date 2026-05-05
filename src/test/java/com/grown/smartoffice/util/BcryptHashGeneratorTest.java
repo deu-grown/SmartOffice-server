@@ -21,4 +21,17 @@ class BcryptHashGeneratorTest {
         System.out.println(hash);
         System.out.println("=============================\n");
     }
+
+    @Test
+    @Disabled("V5 seed SQL 해시 생성용 유틸 — CI에서 실행 불필요")
+    void printV5EmployeeHashes() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String[] passwords = {"EMP002", "EMP003", "EMP004", "EMP005", "EMP006"};
+
+        System.out.println("\n==== V5 EMPLOYEE PASSWORD HASHES ====");
+        for (String pwd : passwords) {
+            System.out.println(pwd + " -> " + encoder.encode(pwd));
+        }
+        System.out.println("=====================================\n");
+    }
 }
