@@ -29,6 +29,7 @@ public class SensorLogRequest {
     private String unit;
 
     @NotNull(message = "측정 시간은 필수입니다.")
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
 
     @lombok.Builder
