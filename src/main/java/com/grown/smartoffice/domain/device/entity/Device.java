@@ -39,8 +39,9 @@ public class Device {
     @Column(name = "mqtt_topic", length = 255)
     private String mqttTopic;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "device_status", nullable = false, length = 10)
-    private String deviceStatus;
+    private DeviceStatus deviceStatus;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -49,4 +50,25 @@ public class Device {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @lombok.Builder
+    public Device(Zone zone, String deviceName, String deviceType, String serialNumber, DeviceStatus deviceStatus) {
+        this.zone = zone;
+        this.deviceName = deviceName;
+        this.deviceType = deviceType;
+        this.serialNumber = serialNumber;
+        this.deviceStatus = (deviceStatus != null) ? deviceStatus : DeviceStatus.ACTIVE;
+    }
+
+    public void updateInfo(String deviceName, String deviceType, String serialNumber, DeviceStatus deviceStatus, Zone zone) {
+        if (deviceName != null) this.deviceName = deviceName;
+        if (deviceType != null) this.deviceType = deviceType;
+        if (serialNumber != null) this.serialNumber = serialNumber;
+        if (deviceStatus != null) this.deviceStatus = deviceStatus;
+        if (zone != null) this.zone = zone;
+    }
+
+    public void updateMqttTopic(String mqttTopic) {
+        this.mqttTopic = mqttTopic;
+    }
 }

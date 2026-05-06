@@ -46,6 +46,7 @@ public class SecurityConfig {
                     .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .requestMatchers("/api/v1/access-logs/tag").permitAll()
+                    .requestMatchers("/api/v1/sensors/logs").permitAll()
                     .anyRequest().authenticated()
             )
             // @Bean 없이 직접 생성 → 서블릿 컨테이너 이중 등록 방지
