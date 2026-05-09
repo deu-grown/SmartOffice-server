@@ -37,9 +37,9 @@ class ReservationRepositoryTest extends RepositoryTestSupport {
 
         user1 = User.builder()
                 .department(dept)
-                .employeeNumber("EMP001")
+                .employeeNumber("TEST001")
                 .employeeName("홍길동")
-                .employeeEmail("hong@test.com")
+                .employeeEmail("test.user@test.com")
                 .password("pw")
                 .role(UserRole.USER)
                 .position("사원")
