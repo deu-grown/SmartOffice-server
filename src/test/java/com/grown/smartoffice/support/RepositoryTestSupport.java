@@ -1,8 +1,8 @@
 package com.grown.smartoffice.support;
 
 import com.grown.smartoffice.config.JpaAuditingConfig;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -16,5 +16,5 @@ import org.springframework.test.context.ActiveProfiles;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Import(JpaAuditingConfig.class)
-public abstract class RepositoryTestSupport extends AbstractContainerTest {
+public abstract class RepositoryTestSupport {
 }

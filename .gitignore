@@ -37,3 +37,8 @@ out/
 .vscode/
 
 application-local.yml
+
+# H2 Database
+data/
+*.mv.db
+*.trace.db

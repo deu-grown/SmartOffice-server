@@ -31,6 +31,7 @@ public class TestSecurityConfig {
                     .requestMatchers("/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/refresh").permitAll()
                     .requestMatchers("/api/v1/access-logs/tag").permitAll()
+                    .requestMatchers("/api/v1/sensors/logs").permitAll()
                     .anyRequest().authenticated()
             );
         return http.build();

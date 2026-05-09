@@ -35,6 +35,7 @@ mqtt:
   password: ${MQTT_PASSWORD:}
   topic:
     access: smartoffice/+/access
+    sensor: smartoffice/+/sensor
 
 springdoc:
   api-docs:
