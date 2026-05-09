@@ -19,7 +19,7 @@
 - **Cache**: Redis 7
 - **ORM**: Spring Data JPA (JpaRepository + @Query JPQL/nativeQuery)
 - **인증**: Spring Security + JWT (Access 30분 / Refresh 7일)
-- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터)
+- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터 / V6 NFC 카드 상태 컬럼 추가)
 - **IoT 통신**: MQTT (Eclipse Paho 1.2.5, QoS Level 1)
 - **API 문서**: Springdoc OpenAPI 3.0.2 (Swagger UI: `/swagger-ui.html`)
 - **인프라**: AWS EC2 t3.small, Docker, GitHub Actions CI/CD
@@ -151,7 +151,7 @@ ApiResponse<T> {
 
 ---
 
-## 현재 구현 상태 (2026-05-05 기준)
+## 현재 구현 상태 (2026-05-09 기준)
 
 ### 완전 구현된 도메인
 
@@ -166,20 +166,16 @@ ApiResponse<T> {
 | `zone` | 구역 CRUD, 계층 트리 조회 |
 | `dashboard` | 전체 요약·센서 현황·근태 현황·출입 기록 API (4개) |
 | `asset` | 자산 CRUD 5개 API (자산 관리 대장) |
-
-### 부분 구현 (Entity·Repository만 존재)
-
-- `device`: Controller/Service 미구현
-- `nfccard`: Controller/Service 미구현
-- `sensor`: SensorLog Entity + SensorLogRepository (Controller/Service 미구현)
+| `device` | 장치 CRUD 5개 API, MQTT 토픽 자동 생성 |
+| `nfccard` | NFC 카드 CRUD, 사용자 카드 조회·발급·회수·만료 처리 |
+| `sensor` | 센서 로그 수집(`SensorMqttListener`), 구역별 최신·이력 조회 |
+| `control` | 냉난방·조명 제어 명령 발송(MQTT), 이력 조회 |
 
 ### 미구현 (API 스펙 존재, 코드 없음)
 
 | 도메인 | ERD 테이블 | API 스펙 |
 |--------|-----------|---------|
 | 예약 관리 | `reservations` (있음) | 8개 API (생성·조회·수정·취소·NFC 체크인 등) |
-| 환경 센서 | `sensor_logs` (있음) | 구역별 실시간·이력 조회 |
-| 제어 명령 | `control_commands` (있음) | 냉난방·조명 제어 |
 | 전력 관리 | `power_billing` (V4) | 5개 API (실시간·이력·월요금 산출 등) |
 | 주차 관리 | `parking_spots` (V4) | 7개 API (주차면 CRUD·현황·지도·IoT 상태 업데이트) |
 
@@ -189,7 +185,7 @@ ApiResponse<T> {
 
 1. **Sprint 1** ✅: 인증(JWT), 계정 관리, 부서/직원 CRUD
 2. **Sprint 2~4** ✅: 출입 판정(MQTT), 근태 집계 배치, 급여 설정·산출
-3. **Sprint 5** 🔲: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
+3. **Sprint 5** ✅: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
 4. **Sprint 6** 🔲: 예약 관리, 전력 관리 *(자산 관리 ✅ 완료)*
 5. **Sprint 7** 🔲: 앱 연동 *(대시보드 API ✅ 완료)*
 6. **Sprint 8** 🔲: 성능 최적화, 보안 강화, 백업
