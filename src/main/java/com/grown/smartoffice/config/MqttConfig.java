@@ -32,7 +32,7 @@ public class MqttConfig {
     @Value("${mqtt.topic.access:smartoffice/+/access}")
     private String accessTopic;
 
-    @Value("${mqtt.topic.sensor:smartoffice/zones/+/devices/+/sensor}")
+    @Value("${mqtt.topic.sensor:smartoffice/+/sensor}")
     private String sensorTopic;
 
     private final AccessLogMqttListener accessLogMqttListener;
@@ -80,8 +80,7 @@ public class MqttConfig {
     }
 
     private boolean isMatch(String pattern, String topic) {
-        // Simple wildcard match for + (one level)
-        // smartoffice/+/access matches smartoffice/room1/access
+        // + 와일드카드(단일 레벨) 매칭 — smartoffice/+/access → smartoffice/room1/access
         String regex = pattern.replace("+", "[^/]+").replace("#", ".*");
         return topic.matches(regex);
     }
