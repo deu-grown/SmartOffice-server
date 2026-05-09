@@ -170,13 +170,13 @@ ApiResponse<T> {
 | `nfccard` | NFC 카드 CRUD 5개 API, NfcCardStatus enum, 출입 로그 보유 카드 삭제 방지 |
 | `sensor` | 센서 로그 수신·최신·이력 조회 API 3개, `SensorMqttListener` (MQTT 수신) |
 | `control` | 제어 명령 발송·상세·이력 API 3개, MQTT 발송, ControlStatus enum |
+| `reservation` | 예약 CRUD 8개 API, NFC 체크인, 구역별·내 예약 조회, 시간 중복 검증 |
+| `power` | 전력 관리 5개 API (실시간·시간별 이력·월 요금 조회·요금 수동 산출), sensor_logs 집계 |
 
 ### 미구현 (API 스펙 존재, 코드 없음)
 
 | 도메인 | ERD 테이블 | API 스펙 |
 |--------|-----------|---------|
-| 예약 관리 | `reservations` (있음) | 8개 API (생성·조회·수정·취소·NFC 체크인 등) |
-| 전력 관리 | `power_billing` (V4) | 5개 API (실시간·이력·월요금 산출 등) |
 | 주차 관리 | `parking_spots` (V4) | 7개 API (주차면 CRUD·현황·지도·IoT 상태 업데이트) |
 
 ---
@@ -186,6 +186,6 @@ ApiResponse<T> {
 1. **Sprint 1** ✅: 인증(JWT), 계정 관리, 부서/직원 CRUD
 2. **Sprint 2~4** ✅: 출입 판정(MQTT), 근태 집계 배치, 급여 설정·산출
 3. **Sprint 5** ✅: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
-4. **Sprint 6** 🔲: 예약 관리, 전력 관리 *(자산 관리 ✅ 완료)*
+4. **Sprint 6** ✅: 예약 관리, 전력 관리 *(자산 관리 ✅ 완료)*
 5. **Sprint 7** 🔲: 앱 연동 *(대시보드 API ✅ 완료)*
 6. **Sprint 8** 🔲: 성능 최적화, 보안 강화, 백업
