@@ -36,6 +36,8 @@ public enum ErrorCode {
     MONTHLY_ATTENDANCE_NOT_FOUND(404, "해당 월 근태 집계 데이터가 없습니다."),
     ASSET_NOT_FOUND(404, "자산을 찾을 수 없습니다."),
     CONTROL_NOT_FOUND(404, "제어 명령을 찾을 수 없습니다."),
+    RESERVATION_NOT_FOUND(404, "예약 정보를 찾을 수 없습니다."),
+    POWER_DATA_NOT_FOUND(404, "해당 월 전력 집계 데이터가 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
@@ -58,6 +60,10 @@ public enum ErrorCode {
     SALARY_RECORD_ALREADY_CONFIRMED(409, "이미 확정된 급여 내역입니다."),
     NO_APPLICABLE_SALARY_SETTING(409, "해당 직급의 적용 가능한 급여 기준이 없습니다."),
     DUPLICATE_ASSET_NUMBER(409, "이미 사용 중인 자산 번호입니다."),
+    RESERVATION_TIME_CONFLICT(400, "해당 시간대에 이미 예약이 존재합니다."),
+    RESERVATION_ALREADY_CANCELLED(400, "이미 취소된 예약입니다."),
+    RESERVATION_CHECK_IN_NOT_ALLOWED(400, "체크인 가능 시간이 아닙니다. 예약 시작 10분 전부터 종료 전까지 가능합니다."),
+    RESERVATION_END_BEFORE_START(400, "예약 종료 시각은 시작 시각 이후여야 합니다."),
 
     // ── 422 Unprocessable Entity ─────────────────────────
     WRONG_PASSWORD(422, "현재 비밀번호가 일치하지 않습니다."),
