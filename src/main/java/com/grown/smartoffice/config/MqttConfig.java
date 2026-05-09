@@ -1,6 +1,7 @@
 package com.grown.smartoffice.config;
 
 import com.grown.smartoffice.domain.accesslog.mqtt.AccessLogMqttListener;
+import com.grown.smartoffice.domain.sensor.mqtt.SensorMqttListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
@@ -31,7 +32,11 @@ public class MqttConfig {
     @Value("${mqtt.topic.access:smartoffice/+/access}")
     private String accessTopic;
 
+    @Value("${mqtt.topic.sensor:smartoffice/+/sensor}")
+    private String sensorTopic;
+
     private final AccessLogMqttListener accessLogMqttListener;
+    private final SensorMqttListener sensorMqttListener;
 
     @Bean
     public MqttClient mqttClient() throws MqttException {
@@ -55,7 +60,12 @@ public class MqttConfig {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                accessLogMqttListener.onMessage(topic, new String(message.getPayload()));
+                String payload = new String(message.getPayload());
+                if (isMatch(accessTopic, topic)) {
+                    accessLogMqttListener.onMessage(topic, payload);
+                } else if (isMatch(sensorTopic, topic)) {
+                    sensorMqttListener.onMessage(topic, payload);
+                }
             }
 
             @Override
@@ -63,9 +73,15 @@ public class MqttConfig {
         });
 
         client.connect(options);
-        client.subscribe(accessTopic, 1);
-        log.info("[MQTT] 연결 완료, 토픽 구독: {}", accessTopic);
+        client.subscribe(new String[]{accessTopic, sensorTopic}, new int[]{1, 1});
+        log.info("[MQTT] 연결 완료, 토픽 구독: {}, {}", accessTopic, sensorTopic);
 
         return client;
+    }
+
+    private boolean isMatch(String pattern, String topic) {
+        // + 와일드카드(단일 레벨) 매칭 — smartoffice/+/access → smartoffice/room1/access
+        String regex = pattern.replace("+", "[^/]+").replace("#", ".*");
+        return topic.matches(regex);
     }
 }

@@ -35,6 +35,7 @@ public enum ErrorCode {
     SALARY_RECORD_NOT_FOUND(404, "급여 산출 내역을 찾을 수 없습니다."),
     MONTHLY_ATTENDANCE_NOT_FOUND(404, "해당 월 근태 집계 데이터가 없습니다."),
     ASSET_NOT_FOUND(404, "자산을 찾을 수 없습니다."),
+    CONTROL_NOT_FOUND(404, "제어 명령을 찾을 수 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
@@ -43,9 +44,13 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
     DUPLICATE_EMPLOYEE_NUMBER(409, "이미 사용 중인 사번입니다."),
     DUPLICATE_NFC_CARD(409, "이미 등록된 NFC 카드 UID입니다."),
+    ALREADY_HAS_ACTIVE_CARD(409, "해당 직원에게 이미 활성화된 NFC 카드가 존재합니다."),
+    NFC_CARD_HAS_ACCESS_LOGS(409, "출입 로그가 존재하는 카드는 삭제할 수 없습니다."),
     DUPLICATE_DEPARTMENT_NAME(409, "이미 존재하는 부서명입니다."),
     DEPARTMENT_HAS_USERS(409, "소속 직원이 존재하여 삭제할 수 없습니다."),
     DUPLICATE_ZONE_NAME(409, "동일 상위 구역 내 중복 구역명입니다."),
+    DUPLICATE_DEVICE_NAME(409, "이미 존재하는 장치명입니다."),
+    DUPLICATE_SERIAL_NUMBER(409, "이미 등록된 시리얼 번호입니다."),
     ZONE_HAS_CHILDREN(409, "하위 구역이 존재하여 삭제할 수 없습니다."),
     ZONE_HAS_DEVICES(409, "설치된 장치가 존재하여 삭제할 수 없습니다."),
     USER_ALREADY_INACTIVE(409, "이미 퇴사 처리된 직원입니다."),

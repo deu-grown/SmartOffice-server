@@ -26,8 +26,10 @@ import org.springframework.context.annotation.Configuration;
 )
 public class OpenApiConfig {
 
+    // Spring Boot 4는 Jackson 3.x(tools.jackson) 기반으로 변경됨.
+    // ControlService 등 Jackson 2.x ObjectMapper 주입이 필요한 Bean을 위해 명시 등록.
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        return new ObjectMapper().findAndRegisterModules();
     }
 }

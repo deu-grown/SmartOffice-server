@@ -18,4 +18,6 @@ public interface AccessLogRepository extends JpaRepository<AccessLog, Long> {
             ORDER BY a.taggedAt DESC
             """)
     List<AccessLog> findRecentWithUserAndZone(@Param("type") String type, Pageable pageable);
+
+    boolean existsByCard_CardId(Long cardId);
 }

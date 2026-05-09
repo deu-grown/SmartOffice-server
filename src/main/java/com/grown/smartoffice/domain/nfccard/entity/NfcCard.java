@@ -33,6 +33,10 @@ public class NfcCard {
     @Column(name = "card_type", nullable = false, length = 10)
     private String cardType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "card_status", nullable = false, length = 10)
+    private NfcCardStatus cardStatus;
+
     @Column(name = "issued_at", nullable = false)
     private LocalDateTime issuedAt;
 
@@ -46,6 +50,24 @@ public class NfcCard {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @lombok.Builder
+    public NfcCard(User user, String cardUid, String cardType, NfcCardStatus cardStatus, LocalDateTime issuedAt, LocalDateTime expiredAt) {
+        this.user = user;
+        this.cardUid = cardUid;
+        this.cardType = cardType;
+        this.cardStatus = (cardStatus != null) ? cardStatus : NfcCardStatus.ACTIVE;
+        this.issuedAt = (issuedAt != null) ? issuedAt : LocalDateTime.now();
+        this.expiredAt = expiredAt;
+    }
+
+    public void updateStatus(NfcCardStatus status) {
+        this.cardStatus = status;
+    }
+
+    public void updateExpiration(LocalDateTime expiredAt) {
+        this.expiredAt = expiredAt;
+    }
 
     public boolean isExpired() {
         return expiredAt != null && LocalDateTime.now().isAfter(expiredAt);

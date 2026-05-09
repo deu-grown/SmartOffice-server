@@ -4,6 +4,7 @@ import com.grown.smartoffice.domain.device.entity.Device;
 import com.grown.smartoffice.domain.zone.entity.Zone;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -47,4 +48,14 @@ public class SensorLog {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Builder
+    public SensorLog(Zone zone, Device device, String sensorType, BigDecimal sensorValue, String sensorUnit, LocalDateTime loggedAt) {
+        this.zone = zone;
+        this.device = device;
+        this.sensorType = sensorType;
+        this.sensorValue = sensorValue;
+        this.sensorUnit = sensorUnit;
+        this.loggedAt = loggedAt;
+    }
 }
