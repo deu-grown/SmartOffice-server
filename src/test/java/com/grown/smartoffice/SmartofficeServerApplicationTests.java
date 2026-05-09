@@ -7,7 +7,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class SmartofficeServerApplicationTests {
+class SmartofficeServerApplicationTests extends AbstractContainerTest {
 
     @Test
     void contextLoads() {

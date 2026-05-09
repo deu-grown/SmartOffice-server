@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NfcCardControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean NfcCardService nfcCardService;
 

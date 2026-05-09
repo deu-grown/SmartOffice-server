@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ControlControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
+    final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean ControlService controlService;
 
