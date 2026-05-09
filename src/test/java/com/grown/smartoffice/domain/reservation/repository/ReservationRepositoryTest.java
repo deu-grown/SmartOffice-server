@@ -123,6 +123,9 @@ class ReservationRepositoryTest extends RepositoryTestSupport {
     @DisplayName("countTodayConfirmed: 오늘 CONFIRMED 예약 수 집계")
     void countTodayConfirmed() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        long baseline = reservationRepository.countTodayConfirmed(
+                ReservationStatus.CONFIRMED, todayStart, todayStart.plusDays(1));
+
         em.persist(reservation(todayStart.plusHours(10), todayStart.plusHours(12)));
         Reservation cancelled = reservation(todayStart.plusHours(13), todayStart.plusHours(14));
         em.persist(cancelled);
@@ -133,7 +136,7 @@ class ReservationRepositoryTest extends RepositoryTestSupport {
         long count = reservationRepository.countTodayConfirmed(
                 ReservationStatus.CONFIRMED, todayStart, todayStart.plusDays(1));
 
-        assertThat(count).isEqualTo(1);
+        assertThat(count).isEqualTo(baseline + 1);
     }
 
     @Test
