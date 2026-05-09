@@ -1,5 +1,7 @@
 package com.grown.smartoffice.domain.user.controller;
 
+import com.grown.smartoffice.domain.accesslog.dto.UserAccessLogListResponse;
+import com.grown.smartoffice.domain.accesslog.service.AccessLogService;
 import com.grown.smartoffice.domain.user.dto.*;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.ApiResponse;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final AccessLogService accessLogService;
 
     @Operation(summary = "직원 목록 조회 [ADMIN]", description = "부서·상태·키워드로 필터링된 직원 목록을 페이지네이션으로 반환합니다.")
     @GetMapping
@@ -89,5 +92,20 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable Long id) {
         userService.deactivateUser(id);
         return ResponseEntity.ok(ApiResponse.success("퇴사 처리되었습니다."));
+    }
+
+    @Operation(summary = "특정 직원 출입 이력 조회 [ADMIN]", description = "특정 직원의 출입 이력을 조회합니다.")
+    @GetMapping("/{id}/access-logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserAccessLogListResponse>> getUserAccessLogs(
+            @PathVariable Long id,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Long zoneId,
+            @RequestParam(required = false) String direction,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success("정상 조회되었습니다.",
+                accessLogService.getUserAccessLogs(id, startDate, endDate, zoneId, direction, page, size)));
     }
 }

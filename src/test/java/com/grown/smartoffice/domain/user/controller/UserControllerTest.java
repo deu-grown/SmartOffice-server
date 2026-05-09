@@ -1,11 +1,9 @@
 package com.grown.smartoffice.domain.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grown.smartoffice.domain.user.dto.UserCreateResponse;
-import com.grown.smartoffice.domain.user.dto.UserDetailResponse;
-import com.grown.smartoffice.domain.user.dto.UserListItemResponse;
-import com.grown.smartoffice.domain.user.dto.UserMeInfoResponse;
-import com.grown.smartoffice.domain.user.dto.UserMeUpdateResponse;
+import com.grown.smartoffice.domain.accesslog.dto.UserAccessLogListResponse;
+import com.grown.smartoffice.domain.accesslog.service.AccessLogService;
+import com.grown.smartoffice.domain.user.dto.*;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.PageResponse;
 import com.grown.smartoffice.support.TestSecurityConfig;
@@ -21,17 +19,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,6 +38,7 @@ class UserControllerTest {
     final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean UserService userService;
+    @MockitoBean AccessLogService accessLogService;
 
     // ── 전체 목록 (ADMIN) ─────────────────────────────────
 
@@ -203,5 +199,18 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.code").value("success"));
 
         verify(userService).deactivateUser(5L);
+    }
+
+    @Test
+    @DisplayName("GET /users/{id}/access-logs — ADMIN 권한으로 200")
+    @WithMockAdminUser
+    void getUserAccessLogs_admin_200() throws Exception {
+        given(accessLogService.getUserAccessLogs(anyLong(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .willReturn(UserAccessLogListResponse.of(1L, "박성종", new PageResponse<>(Collections.emptyList(), 0, 20, 0, 0, true)));
+
+        mockMvc.perform(get("/api/v1/users/1/access-logs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("success"))
+                .andExpect(jsonPath("$.data.userName").value("박성종"));
     }
 }
