@@ -10,6 +10,8 @@ import com.grown.smartoffice.domain.dashboard.dto.DashboardSummaryResponse;
 import com.grown.smartoffice.domain.dashboard.dto.RecentAccessResponse;
 import com.grown.smartoffice.domain.dashboard.dto.SensorCurrentResponse;
 import com.grown.smartoffice.domain.device.repository.DeviceRepository;
+import com.grown.smartoffice.domain.reservation.entity.ReservationStatus;
+import com.grown.smartoffice.domain.reservation.repository.ReservationRepository;
 import com.grown.smartoffice.domain.sensor.entity.SensorLog;
 import com.grown.smartoffice.domain.sensor.repository.SensorLogRepository;
 import com.grown.smartoffice.domain.user.entity.UserStatus;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -36,14 +39,19 @@ public class DashboardService {
     private final AttendanceRepository attendanceRepository;
     private final AccessLogRepository accessLogRepository;
     private final SensorLogRepository sensorLogRepository;
+    private final ReservationRepository reservationRepository;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getSummary() {
         int totalUsers    = (int) userRepository.countByStatus(UserStatus.ACTIVE);
         int activeDevices = (int) deviceRepository.countByDeviceStatus("ACTIVE");
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay   = startOfDay.plusDays(1);
+        int todayReservations = (int) reservationRepository.countTodayConfirmed(
+                ReservationStatus.CONFIRMED, startOfDay, endOfDay);
         return DashboardSummaryResponse.builder()
                 .totalUsers(totalUsers)
-                .todayReservations(0)
+                .todayReservations(todayReservations)
                 .activeDevices(activeDevices)
                 .pendingApprovals(0)
                 .build();
