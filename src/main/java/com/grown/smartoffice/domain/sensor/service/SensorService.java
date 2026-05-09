@@ -38,25 +38,23 @@ public class SensorService {
         Device device = deviceRepository.findById(request.getDeviceId())
                 .orElseThrow(() -> new CustomException(ErrorCode.DEVICE_NOT_FOUND));
         
-        // Optional: Verify if the device belongs to the zone
+        // 디바이스가 해당 구역에 속하는지 검증
         if (!device.getZone().getZoneId().equals(request.getZoneId())) {
-            log.warn("Device {} does not belong to zone {}", request.getDeviceId(), request.getZoneId());
-            // Based on business logic, we might want to throw an error or just proceed.
-            // For now, let's just use the zone from the device to be safe, or throw error.
-            throw new CustomException(ErrorCode.INVALID_INPUT); // Or a more specific error
+            log.warn("장치 {}가 구역 {}에 속하지 않음", request.getDeviceId(), request.getZoneId());
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
         SensorLog sensorLog = SensorLog.builder()
                 .zone(zone)
                 .device(device)
                 .sensorType(request.getSensorType())
-                .value(request.getValue())
-                .unit(request.getUnit())
+                .sensorValue(request.getValue())
+                .sensorUnit(request.getUnit())
                 .loggedAt(request.getTimestamp())
                 .build();
 
         SensorLog savedLog = sensorLogRepository.save(sensorLog);
-        return new SensorLogResponse(savedLog.getId());
+        return new SensorLogResponse(savedLog.getSensorLogsId());
     }
 
     public SensorLatestResponse getLatestData(Long zoneId) {

@@ -35,6 +35,7 @@ public enum ErrorCode {
     SALARY_RECORD_NOT_FOUND(404, "급여 산출 내역을 찾을 수 없습니다."),
     MONTHLY_ATTENDANCE_NOT_FOUND(404, "해당 월 근태 집계 데이터가 없습니다."),
     ASSET_NOT_FOUND(404, "자산을 찾을 수 없습니다."),
+    CONTROL_NOT_FOUND(404, "제어 명령을 찾을 수 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),

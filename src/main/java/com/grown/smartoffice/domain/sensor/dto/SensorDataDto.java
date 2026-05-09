@@ -17,10 +17,10 @@ public class SensorDataDto {
     private final LocalDateTime timestamp;
 
     public SensorDataDto(SensorLog log) {
-        this.id = log.getId();
+        this.id = log.getSensorLogsId();
         this.sensorType = log.getSensorType();
-        this.value = log.getValue();
-        this.unit = log.getUnit();
+        this.value = log.getSensorValue();
+        this.unit = log.getSensorUnit();
         this.timestamp = log.getLoggedAt();
     }
 }
