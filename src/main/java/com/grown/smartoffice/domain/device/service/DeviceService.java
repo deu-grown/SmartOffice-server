@@ -46,11 +46,10 @@ public class DeviceService {
                 .build();
 
         Device savedDevice = deviceRepository.save(device);
-        
-        // MQTT topic generation
-        String suffix = getTopicSuffix(savedDevice.getDeviceType());
-        String mqttTopic = String.format("smartoffice/zones/%d/devices/%d/%s", 
-                zone.getZoneId(), savedDevice.getDevicesId(), suffix);
+
+        // 토픽 구조: smartoffice/{zone_id}/{sensor_type} (CLAUDE.md 기준)
+        String sensorType = getTopicSuffix(savedDevice.getDeviceType());
+        String mqttTopic = String.format("smartoffice/%d/%s", zone.getZoneId(), sensorType);
         savedDevice.updateMqttTopic(mqttTopic);
 
         return new DeviceCreateResponse(savedDevice);
@@ -112,9 +111,9 @@ public class DeviceService {
     private String getTopicSuffix(String deviceType) {
         if (deviceType == null) return "common";
         String type = deviceType.toUpperCase();
-        if (type.contains("NFC")) return "nfc";
+        if (type.contains("NFC")) return "access";
         if (type.contains("SENSOR")) return "sensor";
-        if (type.contains("LIGHT")) return "light";
+        if (type.contains("LIGHT")) return "command";
         return type.toLowerCase();
     }
 }

@@ -88,7 +88,7 @@ public class ControlService {
 
     public ControlDetailResponse getControlDetail(Long id) {
         ControlCommand command = controlCommandRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_SERVER_ERROR)); // Should be CONTROL_NOT_FOUND
+                .orElseThrow(() -> new CustomException(ErrorCode.CONTROL_NOT_FOUND));
         return new ControlDetailResponse(command);
     }
 
