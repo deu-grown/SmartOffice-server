@@ -32,7 +32,7 @@ class ReservationRepositoryTest extends RepositoryTestSupport {
 
     @BeforeEach
     void setUp() {
-        Department dept = Department.builder().deptName("개발팀").build();
+        Department dept = Department.builder().deptName("테스트팀").build();
         em.persist(dept);
 
         user1 = User.builder()

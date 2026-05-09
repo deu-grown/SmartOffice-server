@@ -46,26 +46,26 @@ class PowerBillingRepositoryTest extends RepositoryTestSupport {
     @Test
     @DisplayName("findAllByYearAndMonthWithZone: 연월별 전체 구역 조회")
     void findAllByYearAndMonth() {
-        em.persist(billing(zone1, 2026, 4, new BigDecimal("183.24"), 28148));
-        em.persist(billing(zone2, 2026, 4, new BigDecimal("412.57"), 55628));
-        em.persist(billing(zone1, 2026, 3, new BigDecimal("100.00"), 18160));
+        em.persist(billing(zone1, 2025, 4, new BigDecimal("183.24"), 28148));
+        em.persist(billing(zone2, 2025, 4, new BigDecimal("412.57"), 55628));
+        em.persist(billing(zone1, 2025, 3, new BigDecimal("100.00"), 18160));
         em.flush();
 
-        List<PowerBilling> result = powerBillingRepository.findAllByYearAndMonthWithZone(2026, 4);
+        List<PowerBilling> result = powerBillingRepository.findAllByYearAndMonthWithZone(2025, 4);
 
         assertThat(result).hasSize(2);
-        assertThat(result).allMatch(b -> b.getBillingYear() == 2026 && b.getBillingMonth() == 4);
+        assertThat(result).allMatch(b -> b.getBillingYear() == 2025 && b.getBillingMonth() == 4);
     }
 
     @Test
     @DisplayName("findByZone_ZoneIdAndBillingYearAndBillingMonth: 구역+연월 단건 조회")
     void findByZoneAndYearMonth() {
-        em.persist(billing(zone1, 2026, 4, new BigDecimal("183.24"), 28148));
+        em.persist(billing(zone1, 2025, 4, new BigDecimal("183.24"), 28148));
         em.flush();
 
         Optional<PowerBilling> result =
                 powerBillingRepository.findByZone_ZoneIdAndBillingYearAndBillingMonth(
-                        zone1.getZoneId(), 2026, 4);
+                        zone1.getZoneId(), 2025, 4);
 
         assertThat(result).isPresent();
         assertThat(result.get().getTotalKwh()).isEqualByComparingTo(new BigDecimal("183.24"));
@@ -74,15 +74,15 @@ class PowerBillingRepositoryTest extends RepositoryTestSupport {
     @Test
     @DisplayName("findByZoneIdWithFilters: 구역별 이력 필터 조회")
     void findByZoneIdWithFilters() {
-        em.persist(billing(zone1, 2026, 3, new BigDecimal("100.00"), 18160));
-        em.persist(billing(zone1, 2026, 4, new BigDecimal("183.24"), 28148));
-        em.persist(billing(zone1, 2026, 5, new BigDecimal("200.00"), 30160));
+        em.persist(billing(zone1, 2025, 3, new BigDecimal("100.00"), 18160));
+        em.persist(billing(zone1, 2025, 4, new BigDecimal("183.24"), 28148));
+        em.persist(billing(zone1, 2025, 5, new BigDecimal("200.00"), 30160));
         em.flush();
 
         List<PowerBilling> all = powerBillingRepository.findByZoneIdWithFilters(zone1.getZoneId(), null, null);
         assertThat(all).hasSize(3);
 
-        List<PowerBilling> filtered = powerBillingRepository.findByZoneIdWithFilters(zone1.getZoneId(), 2026, 4);
+        List<PowerBilling> filtered = powerBillingRepository.findByZoneIdWithFilters(zone1.getZoneId(), 2025, 4);
         assertThat(filtered).hasSize(1);
         assertThat(filtered.get(0).getBillingMonth()).isEqualTo(4);
     }
@@ -90,7 +90,7 @@ class PowerBillingRepositoryTest extends RepositoryTestSupport {
     @Test
     @DisplayName("recalculate: 기존 레코드 덮어쓰기")
     void recalculate() {
-        PowerBilling b = billing(zone1, 2026, 4, new BigDecimal("183.24"), 28148);
+        PowerBilling b = billing(zone1, 2025, 4, new BigDecimal("183.24"), 28148);
         em.persist(b);
         em.flush();
 
@@ -99,7 +99,7 @@ class PowerBillingRepositoryTest extends RepositoryTestSupport {
 
         Optional<PowerBilling> updated =
                 powerBillingRepository.findByZone_ZoneIdAndBillingYearAndBillingMonth(
-                        zone1.getZoneId(), 2026, 4);
+                        zone1.getZoneId(), 2025, 4);
         assertThat(updated).isPresent();
         assertThat(updated.get().getTotalKwh()).isEqualByComparingTo(new BigDecimal("200.00"));
         assertThat(updated.get().getTotalFee()).isEqualTo(30160);
