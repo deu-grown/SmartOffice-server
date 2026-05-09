@@ -58,7 +58,7 @@ class SensorServiceTest {
         given(deviceRepository.findById(10L)).willReturn(Optional.of(device));
         
         SensorLog savedLog = SensorLog.builder().build();
-        ReflectionTestUtils.setField(savedLog, "id", 100L);
+        ReflectionTestUtils.setField(savedLog, "sensorLogsId", 100L);
         given(sensorLogRepository.save(any(SensorLog.class))).willReturn(savedLog);
 
         // when
@@ -74,8 +74,8 @@ class SensorServiceTest {
     void getLatestData_success() {
         // given
         given(zoneRepository.existsById(1L)).willReturn(true);
-        SensorLog log1 = SensorLog.builder().sensorType("TEMPERATURE").value(new BigDecimal("24.5")).unit("°C").loggedAt(LocalDateTime.now()).build();
-        SensorLog log2 = SensorLog.builder().sensorType("HUMIDITY").value(new BigDecimal("45")).unit("%").loggedAt(LocalDateTime.now()).build();
+        SensorLog log1 = SensorLog.builder().sensorType("TEMPERATURE").sensorValue(new BigDecimal("24.5")).sensorUnit("°C").loggedAt(LocalDateTime.now()).build();
+        SensorLog log2 = SensorLog.builder().sensorType("HUMIDITY").sensorValue(new BigDecimal("45")).sensorUnit("%").loggedAt(LocalDateTime.now()).build();
         given(sensorLogRepository.findLatestByZoneId(1L)).willReturn(List.of(log1, log2));
 
         // when
@@ -95,7 +95,7 @@ class SensorServiceTest {
         LocalDate start = LocalDate.of(2026, 4, 1);
         LocalDate end = LocalDate.of(2026, 4, 2);
         
-        SensorLog log1 = SensorLog.builder().sensorType("TEMPERATURE").value(new BigDecimal("24.5")).loggedAt(LocalDateTime.now()).build();
+        SensorLog log1 = SensorLog.builder().sensorType("TEMPERATURE").sensorValue(new BigDecimal("24.5")).loggedAt(LocalDateTime.now()).build();
         given(sensorLogRepository.findByZone_ZoneIdAndLoggedAtBetweenOrderByLoggedAtDesc(eq(1L), any(), any()))
                 .willReturn(List.of(log1));
 

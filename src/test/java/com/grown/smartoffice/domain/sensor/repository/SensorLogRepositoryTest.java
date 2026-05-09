@@ -50,16 +50,16 @@ class SensorLogRepositoryTest extends RepositoryTestSupport {
                 .zone(zone1)
                 .device(device1)
                 .sensorType("TEMPERATURE")
-                .value(new BigDecimal("25.0"))
-                .unit("°C")
+                .sensorValue(new BigDecimal("25.0"))
+                .sensorUnit("°C")
                 .loggedAt(now.minusHours(1))
                 .build();
         SensorLog log2 = SensorLog.builder()
                 .zone(zone1)
                 .device(device1)
                 .sensorType("TEMPERATURE")
-                .value(new BigDecimal("26.0"))
-                .unit("°C")
+                .sensorValue(new BigDecimal("26.0"))
+                .sensorUnit("°C")
                 .loggedAt(now)
                 .build();
         em.persist(log1);
@@ -70,7 +70,7 @@ class SensorLogRepositoryTest extends RepositoryTestSupport {
                 zone1.getZoneId(), now.minusHours(2), now.plusHours(1));
         
         assertThat(logs).hasSize(2);
-        assertThat(logs.get(0).getValue()).isEqualByComparingTo(new BigDecimal("26.0")); // Descending
+        assertThat(logs.get(0).getSensorValue()).isEqualByComparingTo(new BigDecimal("26.0")); // Descending
     }
 
     @Test
@@ -81,25 +81,25 @@ class SensorLogRepositoryTest extends RepositoryTestSupport {
         // Temperature logs
         em.persist(SensorLog.builder()
                 .zone(zone1).device(device1).sensorType("TEMPERATURE")
-                .value(new BigDecimal("25.0")).unit("°C").loggedAt(now.minusHours(1)).build());
+                .sensorValue(new BigDecimal("25.0")).sensorUnit("°C").loggedAt(now.minusHours(1)).build());
         em.persist(SensorLog.builder()
                 .zone(zone1).device(device1).sensorType("TEMPERATURE")
-                .value(new BigDecimal("26.0")).unit("°C").loggedAt(now).build()); // latest temp
+                .sensorValue(new BigDecimal("26.0")).sensorUnit("°C").loggedAt(now).build()); // latest temp
 
         // Humidity logs
         em.persist(SensorLog.builder()
                 .zone(zone1).device(device1).sensorType("HUMIDITY")
-                .value(new BigDecimal("40")).unit("%").loggedAt(now.minusHours(1)).build());
+                .sensorValue(new BigDecimal("40")).sensorUnit("%").loggedAt(now.minusHours(1)).build());
         em.persist(SensorLog.builder()
                 .zone(zone1).device(device1).sensorType("HUMIDITY")
-                .value(new BigDecimal("45")).unit("%").loggedAt(now).build()); // latest humi
+                .sensorValue(new BigDecimal("45")).sensorUnit("%").loggedAt(now).build()); // latest humi
         
         em.flush();
 
         List<SensorLog> latestLogs = sensorLogRepository.findLatestByZoneId(zone1.getZoneId());
         
         assertThat(latestLogs).hasSize(2);
-        assertThat(latestLogs).anyMatch(l -> l.getSensorType().equals("TEMPERATURE") && l.getValue().compareTo(new BigDecimal("26.0")) == 0);
-        assertThat(latestLogs).anyMatch(l -> l.getSensorType().equals("HUMIDITY") && l.getValue().compareTo(new BigDecimal("45")) == 0);
+        assertThat(latestLogs).anyMatch(l -> l.getSensorType().equals("TEMPERATURE") && l.getSensorValue().compareTo(new BigDecimal("26.0")) == 0);
+        assertThat(latestLogs).anyMatch(l -> l.getSensorType().equals("HUMIDITY") && l.getSensorValue().compareTo(new BigDecimal("45")) == 0);
     }
 }
