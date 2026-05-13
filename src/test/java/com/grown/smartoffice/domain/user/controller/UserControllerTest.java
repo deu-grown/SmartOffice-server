@@ -213,4 +213,12 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.code").value("success"))
                 .andExpect(jsonPath("$.data.userName").value("박성종"));
     }
+
+    @Test
+    @DisplayName("GET /users/{id}/access-logs — EMPLOYEE 호출 시 403")
+    @WithMockEmployeeUser
+    void getUserAccessLogs_employee_403() throws Exception {
+        mockMvc.perform(get("/api/v1/users/1/access-logs"))
+                .andExpect(status().isForbidden());
+    }
 }

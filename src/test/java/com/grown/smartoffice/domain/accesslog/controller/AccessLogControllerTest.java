@@ -143,4 +143,31 @@ class AccessLogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("success"));
     }
+
+    @Test
+    @DisplayName("GET /access-logs/me — 인증 없음 → 401")
+    void getMyLogs_noAuth_401() throws Exception {
+        mockMvc.perform(get("/api/v1/access-logs/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /access-logs — 필터·페이지 파라미터가 서비스에 전달")
+    @WithMockAdminUser
+    void getAllLogs_passesFilters() throws Exception {
+        given(accessLogService.getAllAccessLogs(eq(2L), eq(1L), eq("APPROVED"), eq("IN"),
+                                                 eq("2026-05-01"), eq("2026-05-13"), eq(1), eq(50)))
+                .willReturn(AllAccessLogListResponse.from(new PageResponse<>(Collections.emptyList(), 1, 50, 0, 0, true)));
+
+        mockMvc.perform(get("/api/v1/access-logs")
+                        .param("zoneId", "2")
+                        .param("userId", "1")
+                        .param("authResult", "APPROVED")
+                        .param("direction", "IN")
+                        .param("startDate", "2026-05-01")
+                        .param("endDate", "2026-05-13")
+                        .param("page", "1")
+                        .param("size", "50"))
+                .andExpect(status().isOk());
+    }
 }
