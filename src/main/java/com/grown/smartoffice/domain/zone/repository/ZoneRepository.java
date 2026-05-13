@@ -31,7 +31,7 @@ public interface ZoneRepository extends JpaRepository<Zone, Long> {
     @Query("SELECT COUNT(d) > 0 FROM Zone z JOIN z.children d WHERE z.zoneId = :zoneId")
     boolean hasChildren(@Param("zoneId") Long zoneId);
 
-    @Query(value = "SELECT COUNT(*) > 0 FROM devices WHERE zone_id = :zoneId", nativeQuery = true)
+    @Query("SELECT COUNT(d) > 0 FROM Device d WHERE d.zone.zoneId = :zoneId")
     boolean hasDevices(@Param("zoneId") Long zoneId);
 
     List<Zone> findAllByZoneType(ZoneType zoneType);
