@@ -19,7 +19,7 @@
 - **Cache**: Redis 7
 - **ORM**: Spring Data JPA (JpaRepository + @Query JPQL/nativeQuery)
 - **인증**: Spring Security + JWT (Access 30분 / Refresh 7일)
-- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터 / V6 NFC 카드 상태 컬럼 추가)
+- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터 / V6 NFC 카드 상태 컬럼 추가 / V7 전력·예약 시드 / V8 시연용 풍부한 더미데이터)
 - **IoT 통신**: MQTT (Eclipse Paho 1.2.5, QoS Level 1)
 - **API 문서**: Springdoc OpenAPI 3.0.2 (Swagger UI: `/swagger-ui.html`)
 - **인프라**: AWS EC2 t3.small, Docker, GitHub Actions CI/CD
@@ -124,7 +124,7 @@ ApiResponse<T> {
 - 환경변수 하드코딩 절대 금지 (`.env` / `application-prod.yml` 사용)
 - ADMIN 전용 엔드포인트는 `@PreAuthorize("hasRole('ADMIN')")` 필수
 - 직원 본인 데이터 접근 시 JWT subject와 PathVariable 대조 검증
-- IoT 장치용 엔드포인트(`/api/v1/access-logs/tag`)는 인증 없이 허용 (SecurityConfig permitAll)
+- IoT 장치용 엔드포인트(`/api/v1/access-logs/tag`, `/api/v1/sensors/logs`, `POST /api/v1/parking/spots/{id}/status`)는 인증 없이 허용 (SecurityConfig permitAll). 서비스 레이어에서 deviceId/UID 일치 검증으로 위·변조 방지.
 
 ### 네이밍
 
@@ -151,33 +151,28 @@ ApiResponse<T> {
 
 ---
 
-## 현재 구현 상태 (2026-05-09 기준)
+## 현재 구현 상태 (2026-05-13 기준)
 
-### 완전 구현된 도메인
+### 완전 구현된 도메인 (9개 도메인 / 17개 컨트롤러)
 
 | 도메인 | 주요 구성요소 |
 |--------|--------------|
 | `auth` | 로그인, 로그아웃, 토큰 갱신, CustomUserDetailsService, 테스트 로그인(`TestAuthController`, `!prod` 전용) |
-| `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리 |
+| `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리, 특정 직원 출입 이력 조회 |
 | `department` | 부서 CRUD |
 | `attendance` | 태그 기록, 조회, 수동 보정, 배치 집계, 스케줄러 |
 | `salary` | 급여 설정 CRUD, 월별 산출, 확정, 조회 |
-| `accesslog` | NFC 태그 처리, MQTT 수신(`AccessLogMqttListener`) |
+| `accesslog` | NFC 태그 처리, MQTT 수신(`AccessLogMqttListener`), 전체/내 출입 로그 조회 (zoneId·userId·authResult·direction·날짜 범위 필터, 페이지네이션) |
 | `zone` | 구역 CRUD, 계층 트리 조회 |
 | `dashboard` | 전체 요약·센서 현황·근태 현황·출입 기록 API (4개) |
 | `asset` | 자산 CRUD 5개 API (자산 관리 대장) |
-| `device` | 장치 CRUD 5개 API, MQTT 토픽 자동 생성 |
-| `nfccard` | NFC 카드 CRUD, 사용자 카드 조회·발급·회수·만료 처리 |
-| `sensor` | 센서 로그 수집(`SensorMqttListener`), 구역별 최신·이력 조회 |
-| `control` | 냉난방·조명 제어 명령 발송(MQTT), 이력 조회 |
+| `device` | 장치 CRUD 5개 API, DeviceStatus enum, MQTT 토픽 자동 생성 |
+| `nfccard` | NFC 카드 CRUD 5개 API, NfcCardStatus enum, 출입 로그 보유 카드 삭제 방지 |
+| `sensor` | 센서 로그 수신·최신·이력 조회 API 3개, `SensorMqttListener` (MQTT 수신) |
+| `control` | 제어 명령 발송·상세·이력 API 3개, MQTT 발송, ControlStatus enum |
 | `reservation` | 예약 CRUD 8개 API, NFC 체크인, 구역별·내 예약 조회, 시간 중복 검증 |
 | `power` | 전력 관리 5개 API (실시간·시간별 이력·월 요금 조회·요금 수동 산출), sensor_logs 집계 |
-
-### 미구현 (API 스펙 존재, 코드 없음)
-
-| 도메인 | ERD 테이블 | API 스펙 |
-|--------|-----------|---------|
-| 주차 관리 | `parking_spots` (V4) | 7개 API (주차면 CRUD·현황·지도·IoT 상태 업데이트) |
+| `parking` | 주차면 CRUD 4개 API + 구역별 현황·지도 2개 API + IoT 점유 상태 업데이트 1개 API, SpotType/SpotStatus enum, deviceId 일치 검증 |
 
 ---
 
@@ -186,6 +181,6 @@ ApiResponse<T> {
 1. **Sprint 1** ✅: 인증(JWT), 계정 관리, 부서/직원 CRUD
 2. **Sprint 2~4** ✅: 출입 판정(MQTT), 근태 집계 배치, 급여 설정·산출
 3. **Sprint 5** ✅: NFC 카드 API, 장치 API, 환경 센서 수집/저장, 냉난방 자동 제어
-4. **Sprint 6** ✅: 예약 관리, 전력 관리 *(자산 관리 ✅ 완료)*
+4. **Sprint 6** ✅: 예약 관리, 전력 관리, 자산 관리, 주차 관리
 5. **Sprint 7** 🔲: 앱 연동 *(대시보드 API ✅ 완료)*
 6. **Sprint 8** 🔲: 성능 최적화, 보안 강화, 백업
