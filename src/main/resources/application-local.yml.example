@@ -3,15 +3,28 @@ mqtt:
   broker-url: tcp://localhost:1883
 
 jwt:
-  # 로컬 개발 전용 시크릿 — HS256 최소 32자 이상 임의 문자열로 설정
-  secret: <YOUR_LOCAL_JWT_SECRET_MIN_32_CHARS>
+  # 로컬 개발 전용 시크릿 — 운영 환경에서는 반드시 JWT_SECRET 환경변수 사용
+  secret: SmartOfficeLocalDevSecretKeyMustBe32CharsOrMore!!
 
 spring:
+#  Local-H2 Settings
+#  datasource:
+#    url: jdbc:h2:mem:smartoffice;MODE=MySQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
+#
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+
+#  Local-Mysql Settings
   datasource:
     url: jdbc:mysql://localhost:3306/smartoffice
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: <YOUR_LOCAL_DB_PASSWORD>
+    password: 1234
 
   jpa:
     hibernate:
