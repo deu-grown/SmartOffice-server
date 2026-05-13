@@ -49,6 +49,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/access-logs/tag").permitAll()
                     .requestMatchers("/api/v1/auth/test-login").permitAll()
                     .requestMatchers("/api/v1/sensors/logs").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/parking/spots/*/status").permitAll()
                     .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(options -> options.sameOrigin()))
