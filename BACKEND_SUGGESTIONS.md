@@ -333,6 +333,34 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## 12. (중) `control_commands.command_type` 정의 부재 — enum 또는 메타 엔드포인트 권장
+
+**근거**
+- `ControlCommand.commandType` 컬럼은 `varchar(15)` 자유 string 이며 검증 enum/허용 목록 부재 (`ControlService.sendCommand` 가 `request.getCommand()` 를 그대로 저장 + MQTT 발송).
+- 어떤 command 값이 IoT(RPi) 에서 처리 가능한지가 **백엔드·web·IoT 어디에도 정의되지 않음**.
+- V8 시드 history 실제 값: `AC` · `LIGHT` · `FAN` (총 17건). `SmartOffice-web/src/components/building/ControlPanel.tsx` 의 quick command 초안은 `LIGHT_ON` · `LIGHT_OFF` · `SET_TEMPERATURE` · `DOOR_LOCK` 으로 시드와 어긋남 → V8 정합 `AC` · `LIGHT` · `FAN` · `DOOR_LOCK` 로 web 측 정정 완료 (`SmartOffice-web` `fix(control)` 커밋).
+- 본질 결함: web 하드코딩이 IoT 가 실제 이해하는 명령과 일치하는지 검증 불가. 컨벤션이 백엔드에 없음.
+
+**제안 범위 (택일)**
+- **(A) `ControlCommandType` enum + 검증 (간단, 권장)**:
+  - `domain/control/entity/ControlCommandType` enum 정의 (예: `AC | LIGHT | FAN | DOOR_LOCK | SET_TEMPERATURE`).
+  - `ControlCommand.commandType` 컬럼 타입 `varchar(15)` → `@Enumerated(EnumType.STRING)` (또는 string 유지하되 service 에서 enum 변환 검증).
+  - `ControlRequest.command` 를 enum 타입으로 받거나 service 에서 `ControlCommandType.valueOf(req.getCommand())` 변환 + `CustomException(INVALID_COMMAND_TYPE)`.
+- **(B) `GET /api/v1/controls/commands` 메타 엔드포인트**:
+  - 응답 예: `[{"command":"AC","label":"공조 가동","valueType":"NUMERIC","unit":"°C"}, {"command":"LIGHT","label":"조명","valueType":"BOOLEAN"}, ...]`
+  - web/모바일이 동적으로 quick command 버튼 생성 → IoT 컨벤션 변경 시 backend 1곳만 수정.
+- (A) + (B) 조합 가능: enum 정의 + 메타 엔드포인트가 enum 을 reflect.
+
+**채택 시 web 후속 작업**
+- `ControlPanel.QUICK_COMMANDS` 하드코딩 제거 → `useControlCommands()` hook 으로 전환 (또는 enum import).
+- 모바일 앱(`SmartOffice-app`) 도 동일 hook/enum 재사용.
+
+**우선순위**: 중. 현재 web 하드코딩으로 동작 가능하나, IoT 측 컨벤션 변경 또는 신규 명령 추가 시 web 수동 동기화 부담 + 잘못된 string 발송 가능성. 시연 후 정리 권장.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-2 시각 검증 후속 (ControlPanel 명령 종류 검토, 2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
