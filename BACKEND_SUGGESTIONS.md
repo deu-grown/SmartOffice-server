@@ -125,6 +125,46 @@
 
 ---
 
+## 7. (상) `GET /api/v1/dashboard/summary` HTTP 500 — 데이터 부재 시 NPE 추정
+
+**발생 맥락**
+- `SmartOffice-web` 플랜 3-1 묶음 2(G2 통합 관제) 백엔드 curl 검증 중 발견 (2026-05-14).
+- 동일 세션에서 admin@grown.com Bearer 토큰으로 `GET /api/v1/dashboard/summary` 호출 → HTTP 500.
+- 응답 본문: `{"code":"error","data":null,"message":"서버 내부 오류가 발생했습니다."}`
+- 같은 토큰으로 호출한 다른 dashboard 3종 (`/sensors/current`, `/attendance/today`, `/access/recent?limit=10`) 은 모두 정상 HTTP 200 → 권한·JWT 문제는 아님.
+
+**재현**
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@grown.com","password":"EMP001"}' | jq -r '.data.accessToken')
+curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/dashboard/summary
+```
+
+**추정 원인**
+- `DashboardService.getSummary` 내부 NPE 또는 데이터 부재 시 예외.
+  - 예: `userRepository.count()` 결과는 정수라 NPE 가능성 낮음.
+  - 예: `reservationRepository.findTodayCount()` 등에서 `today` 기준 결과가 비었을 때 `.size()` 호출 전 null 반환?
+  - 예: `deviceRepository.countByStatus(...)` 같은 쿼리가 enum 매칭 실패?
+- 백엔드 콘솔 로그(`./gradlew bootRun` 출력) 의 스택트레이스로 정확 원인 식별 필요.
+
+**제안**
+- `DashboardService.getSummary` 내부에 null safety 추가 (모든 카운트 메서드의 null 반환 처리).
+- 빈 데이터 케이스를 예외 throw 가 아닌 명시 응답 (모든 카운트 = 0) 으로 처리.
+- DTO `DashboardSummaryResponse` 의 4 필드 (`totalUsers / todayReservations / activeDevices / pendingApprovals`) 가 항상 정수 0 이상 보장되도록 서비스 레이어에서 정규화.
+- 회귀 방지를 위해 `DashboardServiceTest` 에 "데이터 없음" 케이스 단위 테스트 추가.
+
+**프론트 영향**
+- `SmartOffice-web` `IntegratedDashboard` 의 KPI 카드 4종 (현재 출근 인원·오늘 예약·활성 장치·전체 사용자) 이 영구 실패 상태.
+- 위젯 단위 `ErrorBoundary` / `useDashboardSummary` 의 `isError` 처리 덕분에 페이지 깨짐은 없으나, **핵심 KPI 미표시** = 대시보드의 first visible content 손실.
+- 백엔드 수정 후 즉시 프론트 재검증 필요 (curl + 브라우저 `/dashboard`).
+
+**우선순위**: 상. KPI 카드는 대시보드의 first visible content. 다른 dashboard 3종 응답은 정상이므로 본 1건 수정만으로 G2 완성도 회복.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 2 백엔드 curl 검증 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
