@@ -165,6 +165,57 @@ curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/dashboard
 
 ---
 
+## 8. (중) `access_logs.auth_result` 시드 데이터 정합성 — V5 의 `ALLOW` 값 잔존
+
+**발생 맥락**
+- `SmartOffice-web` 플랜 3-1 묶음 4(G4 출입 기록) 백엔드 curl 검증 (2026-05-14).
+- `GET /api/v1/access-logs?authResult=ALLOW` 가 `totalElements=8` 으로 응답 — V5 시드 데이터의 잔존.
+- 같은 의미(인증 성공)에 대해 `APPROVED`(53건) 와 `ALLOW`(8건) 두 값이 공존.
+
+**재현**
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@grown.com","password":"EMP001"}' | jq -r '.data.accessToken')
+
+# 코드 표준(APPROVED) 응답
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/access-logs?authResult=APPROVED&size=1" | jq '.data.totalElements'
+# → 53
+
+# V5 시드 잔존(ALLOW) 응답
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/access-logs?authResult=ALLOW&size=1" | jq '.data.totalElements'
+# → 8
+```
+
+**근거**
+- `AccessLogService` 의 NFC 태그 처리 코드는 `"APPROVED"` / `"DENIED"` 만 사용 (BLOCKED 는 별도 분기에서 추가).
+- `V8__seed_demo_dataset.sql` 주석 (L298-L300) 도 다음과 같이 명시:
+  ```
+  -- ⑫ 출입 로그 — 다양한 사용자 × 30일치 × ALLOW/DENIED/BLOCKED 혼합 (총 ~80건)
+  --   * 코드는 'APPROVED' / 'DENIED' / 'BLOCKED' 를 사용
+  --     V5는 'ALLOW' 사용 (기존 데이터 보존). V8는 코드 기준.
+  ```
+- 즉 V5/V8 시드 정책 차이가 의도적으로 보존된 상태이나, 코드 표준 단일 enum 으로 통일하는 편이 클라이언트·DB 모두 정합성 측면에서 안전.
+
+**제안**
+- 신규 Flyway 마이그레이션 (예: `V9__migrate_allow_to_approved.sql`) 에서
+  `UPDATE access_logs SET auth_result = 'APPROVED' WHERE auth_result = 'ALLOW';` 1회 실행.
+- 또는 V5 시드 SQL 자체를 'APPROVED' 로 정정 (단 운영 환경 이미 적용된 DB 가 있다면 별도 마이그레이션 필요).
+- 향후 enum 컬럼화 검토 — `String` → DB enum 또는 Java `AuthResult` enum 으로 강타입화하면 본 류 정합성 이슈를 컴파일 단계에서 방지.
+
+**프론트 영향**
+- `SmartOffice-web/src/features/accesslog/types.ts` 의 `AccessLogAuthResult` literal union 을 `"APPROVED" | "DENIED" | "BLOCKED" | "ALLOW"` 로 정의해 호환 처리 중.
+- `AccessRecordTable` UI 의 라벨 매핑(`AUTH_LABEL`) 에서 `APPROVED` 와 `ALLOW` 를 동일 "정상" 라벨로 매핑.
+- 백엔드 마이그레이션 완료 시 클라이언트의 `ALLOW` 분기를 단계적으로 제거 가능.
+
+**우선순위**: 중. 운영 동작 영향 없음 (단순 조회 분기). 데이터 정합성 + 클라이언트 enum 단순화 차원의 개선.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 4 백엔드 curl 검증 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
