@@ -400,6 +400,52 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## [2026-05-14] (저~중) 주차 차량(Vehicle)/예약(Reservation) 모델 신설 검토
+
+**발생 맥락**
+
+- `SmartOffice-web` 플랜 3-3 G9 ParkingManagement 흡수 중 발견.
+- 현재 `ParkingController` 가 제공하는 기능 = `ParkingSpot` CRUD (cat 2 ADMIN) + zone summary/map (cat 5 인증) + IoT 점유 상태 업데이트 (cat 4 permitAll).
+- 백엔드 모델에 부재한 운영 기능 (mock UI 가 표현하고 있던 항목):
+  - 차량(Vehicle) — 번호판, 소유자, 임직원/방문객 구분, 방문 목적
+  - 차량 예약(ParkingReservation) — 사전 예약, 입출차 시각, 상태(RESERVED/PARKED/EXITED)
+- 현재 `ParkingSpot` 만으로는 "누가 점유했는지" 추적 불가 (IoT 센서는 점유 여부만 갱신, identity 없음).
+
+**임시 처리 (web)**
+
+- `SmartOffice-web/src/components/dashboard/ParkingManagement.tsx` 의 차량 의존 코드 전체 제거 (`vehicles` mock · 등록 Dialog · 상세·수정 Dialog · 상태 변경 dropdown · filterStatus · 차량 stats 카드 3종).
+- 잔존 UI = ParkingSpot CRUD + zone summary + zone map(평면도). Stat 카드는 spot 통계(`총 주차면 / 점유 / 여유 / 비활성`) 로 재구성.
+- 차량 관리 기능은 본 plan 범위 외로 격리.
+
+**제안 범위 (택일 또는 조합)**
+
+- **(A) Vehicle + ParkingReservation 신설 (단순 대장 모델)**:
+  - `Vehicle` (plate_number, owner_name, owner_user_id?, type[STAFF|VISITOR], purpose?, created_at)
+  - `ParkingReservation` (vehicle_id, zone_id, spot_id?, reserved_at, entry_at?, exit_at?, status[RESERVED|PARKED|EXITED])
+  - 컨트롤러: `POST/GET/PUT/DELETE /api/v1/vehicles`, `POST/GET/PUT/DELETE /api/v1/parking/reservations`.
+- **(B) AccessLog 통합 (NFC/번호판 인식)**:
+  - 출입 시스템(access_log) 에 차량 entry 를 동등 처리 — `access_logs.vehicle_plate?` + `access_logs.entry_type[USER|VEHICLE]`.
+  - ALPR(차량 번호판 인식) 또는 RFID 태그 연계 (별도 IoT 설계).
+- **(C) 별도 ALPR 서비스 연계**:
+  - 외부 ALPR 카메라/서비스 (예: Hikvision, Genetec) 통합. 별도 마이크로서비스로 분리.
+
+**근거**
+
+- mock UI 의 차량 등록/예약/입출차 흐름이 시연 환경에서 의미 있는 운영 요구로 보임 (방문객 차량 사전 등록, 임직원 차량 입출차 시각 기록 등).
+- 현재 ParkingSpot 만으로는 점유 여부만 알 수 있고, 누구의 차량인지 / 언제 들어왔는지 추적 불가.
+- 옵션 (A) 가 가장 직접적이지만, 향후 NFC/출입 시스템과 통합 가능성 고려 시 (B) 도 매력적. 설계 결정 선행 필요.
+
+**채택 시 web 후속 작업**
+
+- 옵션 (A) 채택 시: `src/features/vehicle/{...}` + `src/features/reservation/{...}` 신설. `ParkingManagement` 에 차량 등록/상세/예약 UI 복원 (기존 mock 패턴 재활용 가능).
+- 옵션 (B) 채택 시: `src/features/accesslog/` 확장 — 차량 출입 표시. ParkingManagement 는 spot 중심 유지.
+
+**우선순위**: 저~중 — 단순 차량 대장 vs 출입 시스템 통합 vs 별도 ALPR 연계 (설계 결정 선행). 현재 web 측은 spot 관리만으로 동작 가능. 시연 후 정리 권장.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-3 0단계 검증 (차이 C, 2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
