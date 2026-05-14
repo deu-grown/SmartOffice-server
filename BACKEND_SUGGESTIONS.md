@@ -446,6 +446,44 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## [2026-05-14] (저~중) GET /api/v1/parking/zones — 주차면 보유 zone 목록 조회 엔드포인트 신설
+
+**발생 맥락**: `SmartOffice-web` 플랜 3-3 시각 검증에서 발견. `ParkingManagement` 헤더 zone Select 가 `useZones()` 전체 14건(FLOOR 5 + AREA 4 + ROOM 5)을 노출하여 주차면 0건 zone(회의실 C/D/E·휴게실·카페 라운지 등) 선택 시 빈 응답 — UX 무의미. 사용자 의문: 주차면 보유 zone(현 시드 8/9 = 지하1층/지하 2층)만 떠야 하지 않나?
+
+**임시 처리(web 단독)**: `useParkingSpots({})` 응답 zoneId distinct + `useZones()` name 매핑으로 자체 셀렉터 구성. POWER_ZONES_TEMP / `useZoneDetail`(GET /zones/{id} 부재 우회) 패턴 동일. 시드 보유 zone만 동적으로 노출되어 UX 정합 즉시 달성.
+
+**제안 (옵션 A — 권장)**: `GET /api/v1/parking/zones` 신설.
+
+```
+GET /api/v1/parking/zones
+→ List<ParkingZoneListResponse>
+  { zoneId, zoneName, zoneType, totalSpots, occupiedSpots }
+```
+
+- 주차면(`parking_spots`)이 1건 이상 등록된 zone 만 반환.
+- 응답에 `totalSpots`·`occupiedSpots` 포함 시 ParkingManagement 헤더에서 Select trigger label 에 보조 정보 노출 가능 ("지하1층 (15면)" 등).
+- 권한: ADMIN (조회). 평균 응답 zone 수 적음(현 시드 2건, 운영 ≤10건 예상) → 페이지네이션 불필요.
+
+**제안 (옵션 B)**: 기존 `GET /api/v1/parking/spots` 응답에 `zoneId` 만 distinct 추출하는 클라이언트 책임 유지. 별도 엔드포인트 신설 X.
+
+- 단점: 모든 spot row 를 받아 distinct — N+1 비효율(spot 수 ≫ zone 수). 현 시드 25건 수준이라 무시 가능하나 대규모 시 부담.
+
+**채택 시 web 후속 작업**
+
+- 옵션 A 채택 시: `src/features/parking/hooks.ts` 에 `useParkingZones()` 추가, `ParkingManagement.tsx` 의 `allSpotsForZonesQuery` + `useMemo` distinct 로직을 `useParkingZones()` 단일 호출로 교체. queryKey 는 `parkingKeys.zones` 신규.
+- 옵션 B 채택 시: 현 web 우회 그대로 유지(추가 작업 없음).
+
+**근거**
+
+- 동일 패턴이 이미 web 우회로 검증됨. 백엔드 측은 단순 `JPQL SELECT DISTINCT z FROM Zone z JOIN ParkingSpot p ON p.zone = z` 1쿼리로 구현 가능.
+- 응답에 통계(`totalSpots`·`occupiedSpots`) 포함 시 cat 5 zone summary 엔드포인트(`/parking/zones/{zoneId}/spots`)와 책임 분담 명확 — 목록용 가벼운 응답 vs 상세 요약.
+
+**우선순위**: 저~중 — 현재 web 우회 동작 가능. 백엔드 부하·UX 정합도 측면에서 채택 권장. dashboard/sensors-current 와 유사한 도메인별 zone 목록 패턴.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-3 시각 검증 결함 12-1 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
