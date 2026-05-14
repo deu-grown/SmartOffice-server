@@ -256,6 +256,49 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## 10. (저~중) `GET /api/v1/zones/{id}` 신설 권장
+
+**근거**
+- `SmartOffice-web` 플랜 3-2 G5 `ZoneDetailView` 구현 중 발견. `ZoneController` 5종에 `GET /{id}` 부재 (`GET 목록 / GET /tree / POST / PUT / DELETE` 만 존재). `ZoneDetailResponse` DTO 자체 부재.
+- 다른 도메인(`device`, `asset`, `user`, `nfccard`)은 모두 `GET /{id}` 보유 — REST 컨벤션 정합성 누락.
+- zone N건 전체 조회 후 클라이언트 `find(id)` 방식은 V7 시드 ~10건 규모에서는 무시 가능하나, zone 100건+ 시점에 비효율.
+- 향후 zone detail 전용 집계 필드(설치 장치 수, 자식 zone 수, 진행 중 예약 수 등) 추가 시 별도 엔드포인트가 자연스러움.
+
+**임시 처리 (web 단독, 채택 대기)**
+- `SmartOffice-web/src/features/zone/hooks.ts:useZoneDetail(id)` 가 `useZones()` 응답을 `useMemo` + `find(z => z.id === id)` 로 추출.
+- `ZoneListItemResponse = { id, name, zoneType, parentId, description, createdAt }` 6 필드가 `ZoneDetailView` 표시 필드를 100% 충족함을 검증 완료 (`ZoneInfoTab` 표시 필드 기준).
+- `zoneKeys.detail(id)` queryKey 는 백엔드 채택 대비 유지 — hook 내부만 `useQuery` 로 swap 가능.
+
+**제안 범위**
+- 컨트롤러: `ZoneController` 에 `GET /api/v1/zones/{id}` 추가, `@PreAuthorize("hasRole('ADMIN')")`.
+- DTO: `ZoneListItemResponse` 동일 DTO 재사용 가능. 또는 확장 `ZoneDetailResponse` (`childCount`, `deviceCount`, `activeReservationCount` 등 detail 전용 집계 포함) 신설.
+- 서비스: `ZoneService.getZoneDetail(Long id)` 도입. 존재하지 않으면 `CustomException(ErrorCode.ZONE_NOT_FOUND)`.
+- 응답 예 (`ZoneListItemResponse` 재사용 시):
+  ```json
+  {
+    "code": "success",
+    "message": "정상 조회되었습니다.",
+    "data": {
+      "id": 2,
+      "name": "회의실 A",
+      "zoneType": "MEETING_ROOM",
+      "parentId": 1,
+      "description": "3F 회의실",
+      "createdAt": "2026-03-02T09:00:00"
+    }
+  }
+  ```
+
+**채택 시 web 후속 작업**
+- `features/zone/api.ts` 에 `getZoneDetail(id)` 추가.
+- `features/zone/hooks.ts:useZoneDetail(id)` 내부를 `useQuery({ queryKey: zoneKeys.detail(id), queryFn: () => zoneApi.getZoneDetail(id) })` 로 전환. queryKey 그대로 유지하므로 컴포넌트 변경 없음.
+
+**우선순위**: 저~중. 현재 동작 가능하나, zone 증가 또는 detail 전용 필드 확장 시점에 전환 필요.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-2 0단계 read-only 검증 (차이 #1) — `ZoneListItemResponse` DTO 충족성 검증 완료 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
