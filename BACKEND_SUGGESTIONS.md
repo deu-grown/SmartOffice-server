@@ -216,6 +216,46 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## 9. (중) POWER 미터 보유 zone 목록 엔드포인트 추가 — `GET /api/v1/power/zones`
+
+**발생 맥락**
+- `SmartOffice-web` 플랜 3-1 G2 단계 `PowerCurrentWidget` 시각 검증 중 회의실 A·B 의 실시간 전력이 표시되지 않는 결함을 발견 (2026-05-14).
+- 원인은 web 측 설계 결함이었음. 위젯이 `IntegratedDashboard` 의 환경 모니터링 셀렉터(selectedZoneId)를 그대로 공유하는데, 그 셀렉터는 `GET /api/v1/dashboard/sensors/current` 응답의 zoneId 만 노출 → 환경 센서(TEMPERATURE/HUMIDITY/CO2)를 보유하지 않은 zone(POWER 미터만 보유한 회의실 A·B)은 셀렉터에서 선택 자체가 불가능.
+- 백엔드 데이터는 정상 (V7 시드에 zone 2/4/5/7 POWER 미터 시드 존재).
+
+**현재 임시 처리 (web 측)**
+- `SmartOffice-web/src/features/power/constants.ts` 신규 — `POWER_ZONES_TEMP` 상수에 V7 시드 기준 zone 4건 하드코딩 (회의실 A · 회의실 B · 개발팀 좌석 · 서버실).
+- `PowerCurrentWidget` 가 환경 셀렉터와 분리된 **자체 셀렉터** 도입.
+- 한계: zone 추가/삭제 시 프론트 상수를 수동 갱신해야 함. 시드 ↔ 상수 동기화 부담.
+
+**제안**
+- 신규 엔드포인트: `GET /api/v1/power/zones`
+- 응답 DTO 예시:
+  ```json
+  {
+    "code": "success",
+    "message": "정상 조회되었습니다.",
+    "data": [
+      { "zoneId": 2, "zoneName": "회의실 A", "meterCount": 1 },
+      { "zoneId": 4, "zoneName": "회의실 B", "meterCount": 1 },
+      { "zoneId": 5, "zoneName": "개발팀 좌석", "meterCount": 1 },
+      { "zoneId": 7, "zoneName": "서버실", "meterCount": 1 }
+    ]
+  }
+  ```
+- 구현 메모: `sensor_logs` 또는 `devices` 에서 `sensor_type='POWER'` 또는 `device_type='POWER_METER'` 가 등록된 zone 을 distinct 로 집계. (현재 시드는 sensor_logs.sensor_type='POWER' 사용.)
+- 권한: `@PreAuthorize("hasRole('ADMIN')")` (대시보드 위젯용).
+
+**채택 시 web 후속 작업**
+- `constants.ts` 의 `POWER_ZONES_TEMP` 제거 → `usePowerZones()` 훅으로 전환.
+- `PowerCurrentWidget` 의 Select 옵션 소스를 hook 응답으로 변경.
+
+**우선순위**: 중. 현재 임시 하드코딩으로 동작 가능하나, zone 변경 시 web 수동 동기화 부담 + 시드 기반 가정이 운영 환경과 어긋날 가능성 있음.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-1 G2 `PowerCurrentWidget` 결함 분석 — 옵션 4(자체 셀렉터 + 임시 하드코딩 + BACKEND_SUGGESTIONS) 채택 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
