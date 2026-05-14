@@ -361,6 +361,45 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## [2026-05-14] (상) PUT /api/v1/zones/{id} body deserialize 결함 — "요청 본문을 읽을 수 없습니다"
+
+**발생 맥락**
+
+- `SmartOffice-web` 플랜 3-2 묶음 6 (시각 재검증 후속 fix 라운드 2차) 중 ZoneInfoTab 의 zone 수정 모달이 모달 자체는 정상 렌더되나 저장 시 백엔드가 일관되게 에러 응답.
+- 시연 환경 admin 토큰으로 curl 직접 검증:
+  - `PUT /api/v1/zones/2` body `{"name":"회의실 A (수정)","zoneType":"ROOM","description":"테스트"}` → `{"code":"error","message":"요청 본문을 읽을 수 없습니다"}`
+  - body 에 `parentId` · `clearParent` 포함한 변형도 동일 에러
+  - `name` 만 보낸 최소 body 도 동일 에러
+  - 참고: `POST /api/v1/zones` (동일/유사 body) 는 정상 200 응답 — 결함은 PUT 한정.
+- 사용자 시각 보고: "zone 이름 수정 후 사라짐" → 모달이 mutation 성공 시 닫히지만 invalidate 후 목록 갱신 결과가 원본 그대로 (수정 미반영).
+
+**추정 원인**
+
+- `ZoneUpdateRequest` DTO 의 `clearParent` 필드가 **primitive `boolean`** 으로 선언되어 있고 `@NoArgsConstructor` 환경에서 setter 가 부재한 것으로 추정.
+- Jackson 이 PUT body 를 deserialize 할 때, primitive `boolean` 필드는 기본값 `false` 가 있으나 setter 없이는 주입 경로가 없어 `JsonMappingException` 발생 가능.
+- POST 가 정상이라는 점은 `ZoneCreateRequest` 와 `ZoneUpdateRequest` 의 필드 구성 차이 (특히 `clearParent` 의 존재 여부) 가 결정적 차이임을 시사.
+- 백엔드 코드 read-only 검증 미실시 (web 작업자 권한 밖). 위 추정은 web 측 curl 응답 메시지와 DTO 비교로부터 유추된 가설이며, 백엔드 작업자가 원인 확인 필요.
+
+**제안**
+
+- (택일 또는 조합)
+  - **(A)** `ZoneUpdateRequest.clearParent` 를 `Boolean` (wrapper) 으로 변경 + `@JsonProperty` 명시 + Lombok `@Setter` 또는 `@Data` 적용 확인.
+  - **(B)** Lombok `@Builder` / `@AllArgsConstructor` / `@Jacksonized` 조합으로 record-like 불변 DTO 로 재설계 (스프링 기본 `MappingJackson2HttpMessageConverter` 와 호환).
+  - **(C)** Controller 메서드에 `@RequestBody` 가 누락되었거나 `consumes = "application/json"` 미설정 등 사소한 메타 이슈 확인 (가능성 낮음, POST 가 정상이므로).
+- 수정 후 통합 테스트: `ZoneControllerTest` 에 PUT 케이스 추가 — `name` 만 / `parentId` 만 / `clearParent=true` / 전체 필드 4가지 body 변형이 200 으로 응답해야 한다.
+
+**web 영향**
+
+- web 측 우회 불가 (deserialize 가 컨트롤러 진입 전에 실패하므로 응답 메시지·재시도 모두 불가능).
+- 현재 web ZoneInfoTab 수정 모달은 mutation 성공 후 닫히지만 실제 데이터는 변경되지 않음 → 시연 시 "수정이 적용되지 않음" 회귀 노출.
+- 백엔드 수정 후 web 측 추가 작업 불필요 (request body shape 변경 없음 가정).
+
+**우선순위**: **상** — zone 수정이 admin 운영 기능의 핵심 액션 중 하나이며, 현재 완전 차단 상태. 시연 영향도 큼.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 6 시각 재검증 (Fix 7, 2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
