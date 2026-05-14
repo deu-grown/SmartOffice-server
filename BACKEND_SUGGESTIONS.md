@@ -299,6 +299,40 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## 11. (상) `GET /api/v1/power/zones/{zoneId}/hourly` HTTP 500 결함
+
+**근거**
+- `SmartOffice-web` 플랜 3-2 묶음 4 종료 백엔드 curl 검증 중 발견 (2026-05-14).
+- POWER 미터 보유 zone (V8 시드 기준 2 · 4 · 5 · 7) **모두 일관 HTTP 500** 반환:
+  ```
+  {"code":"error","data":null,"message":"서버 내부 오류가 발생했습니다."}
+  ```
+- `startDate`/`endDate` 파라미터 유무와 무관 (없어도 500).
+- 동 컨트롤러의 `/billing` 엔드포인트는 정상 (`GET /power/zones/5/billing?year=2026&month=4` → `totalKwh 2350.50` 정상 응답) — service layer 의 `getHourlyHistory` 만 실패.
+
+**추정 원인 (백엔드 read-only 분석)**
+- `PowerController.getHourlyHistory` → `PowerService.getHourlyHistory(zoneId, startDate, endDate, deviceId)` 호출.
+- `HourlyPowerProjection` interface (`String getHourAt()` + 다수 `BigDecimal`) → repository projection mapping NPE 가능성.
+- 또는 startDate=null 처리 누락 (default 처리 없으면 NPE).
+- 또는 sensor_logs hourly aggregation native query 의 group-by 결함.
+
+**영향**
+- `SmartOffice-web` G7 `PowerHourlyChart` (묶음 4 커밋 `35cdef7`) + G5 `ZonePowerTab` (커밋 `20e50cd`).
+- web 측은 `usePowerHourly` 의 `isError` 분기 + `ErrorBoundary` 로 graceful handling — 앱 정상 동작, **시각화만 비활성**. UI 회귀 없음.
+
+**제안 범위**
+- `PowerService.getHourlyHistory` 디버깅:
+  - `HourlyPowerProjection` mapping (native query / @Query 의 alias 일치 확인)
+  - `startDate`/`endDate` null 시 default 처리 (예: 최근 24h)
+  - sensor_logs 의 sensor_type='POWER' 데이터 존재 확인
+- repository 단위 테스트 추가 (V8 시드 기반 POWER zone 4건).
+
+**우선순위**: 상. 본 플랜의 `PowerHourlyChart` 시각화 핵심 기능이 비활성 상태. 시연 직전 결함.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 4 종료 curl 검증 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
