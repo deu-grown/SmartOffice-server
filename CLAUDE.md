@@ -151,7 +151,9 @@ ApiResponse<T> {
 
 ---
 
-## 현재 구현 상태 (2026-05-13 기준)
+## 현재 구현 상태 (2026-05-15 기준)
+
+> **2026-05 SmartOffice-web 통합 작업 종료**. `BACKEND_SUGGESTIONS.md` 누적 16 항목(#1~#16, web 통합 중 발견 #7~#16 포함) — 후속 백엔드 수정 플랜의 입력. web 측 잔존 결함 추적표는 `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 참조.
 
 ### 완전 구현된 도메인 (9개 도메인 / 17개 컨트롤러)
 
