@@ -484,6 +484,57 @@ GET /api/v1/parking/zones
 
 ---
 
+## [2026-05-14] (중) parking_spots 좌표 충돌 검증 — UNIQUE 제약 + null XOR 가드
+
+**발생 맥락**: `SmartOffice-web` 플랜 3-3 시각 재검증 중 발견. `ParkingZoneMap` 좌표 스케일링 fix 후 평면도 격자 렌더는 정상이나, 백엔드 측 `(zone_id, position_x, position_y)` 유니크 검증 부재로 같은 zone 같은 좌표에 spot 여러 개 등록 가능. 평면도에서 spot 타일이 z-stack 으로 겹쳐 마지막 등록만 노출됨 — 결함 11 root cause 와 동일한 시각 결함이 데이터 무결성 차원에서 재현 가능.
+
+**현황**:
+
+- DB `parking_spots` 유니크 제약 (V4): `(zone_id, spot_number)` + `device_id` 단독. **`(zone_id, position_x, position_y)` 부재**
+- `ParkingServiceImpl.createSpot` / `updateSpot`: `spot_number`, `device_id` 충돌 검증만 존재. **좌표 충돌 검증 X**
+- `position_x` / `position_y` 둘 다 nullable — **null XOR (한쪽만 null) 검증 부재**. 좌표 시스템 의미상 "둘 다 null (grid fallback)" 또는 "둘 다 값" 만 정합
+
+**임시 처리(web 단독)**: `ParkingSpotsTable` 등록/수정 핸들러에 사전 검증 추가. `useParkingSpots({})` 응답에서 같은 zone + 같은 좌표 spot 검색 → 충돌 시 toast 차단. null XOR 도 동일 가드. 백엔드 채택 시 web 사전 검증 제거 (단, race condition 보장은 서버 측에서만 가능).
+
+**제안**
+
+1. **DB UNIQUE 인덱스 추가** (Flyway V9 migration):
+
+```sql
+ALTER TABLE parking_spots
+  ADD CONSTRAINT UQ_PARKING_SPOTS_POSITION UNIQUE (zone_id, position_x, position_y);
+```
+
+- MySQL `UNIQUE` 의 NULL ≠ NULL 정책으로 좌표 둘 다 null 인 spot 은 자유 통과 (grid fallback 자연 보존)
+- 기존 시드(V8) 는 zone 8/9 좌표 모두 (1~10, 1~2) 분포로 충돌 없음 — migration 안전
+
+2. **Service 충돌 검증** (`ParkingServiceImpl`):
+
+- `createSpot`: 좌표 둘 다 not null 시 `parkingSpotRepository.existsByZone_ZoneIdAndPositionXAndPositionY(zoneId, x, y)` → 충돌 시 신규 `ErrorCode.DUPLICATE_SPOT_POSITION`
+- `updateSpot`: `existsByZone_ZoneIdAndPositionXAndPositionYAndSpotIdNot(...)` (자기 자신 제외)
+
+3. **null XOR 가드** (`ParkingSpotCreateRequest` / `UpdateRequest`):
+
+- bean validation custom annotation 또는 service 진입 직후 명시 검증
+- `(positionX == null) != (positionY == null)` 차단 → 신규 `ErrorCode.INVALID_POSITION_PAIR` 또는 기존 `INVALID_INPUT` 재사용
+
+**근거**
+
+- 좌표는 평면도 시각 정합의 핵심 키. 충돌 시 z-stack 으로 마지막 spot 만 표시 → 결함 11 fix 후에도 동일 증상 가능
+- web 사전 검증은 UX 즉시 개선이나 race condition (동시 등록 2건) 보장 X. 데이터 무결성은 DB 제약으로만 가능
+- `spot_number` 와 `device_id` 가 이미 유니크 제약 보유 → 좌표도 동일 정책으로 일관성 유지
+
+**채택 시 web 후속 작업**
+
+- `ParkingSpotsTable` 사전 검증 로직 제거 (백엔드 4xx + `getErrorMessage` 토스트로 충분)
+- 신규 ErrorCode 추가 시 `src/lib/api/errors.ts` 한국어 매핑 갱신 (`DUPLICATE_SPOT_POSITION` → "이미 등록된 좌표입니다." 등)
+
+**우선순위**: 중 — 데이터 무결성 + UX 정합. 시연 환경에서 발견 가능한 결함이라 우선 처리 권장. `spot_number`/`device` 유니크와 동일 레벨.
+
+**출처 세션**: `SmartOffice-web` 플랜 3-3 시각 재검증 좌표 충돌 진단 (2026-05-14).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.
