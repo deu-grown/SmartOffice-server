@@ -3,6 +3,7 @@ package com.grown.smartoffice.domain.user.controller;
 import com.grown.smartoffice.domain.accesslog.dto.UserAccessLogListResponse;
 import com.grown.smartoffice.domain.accesslog.service.AccessLogService;
 import com.grown.smartoffice.domain.user.dto.*;
+import com.grown.smartoffice.domain.user.service.UserPreferencesService;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.ApiResponse;
 import com.grown.smartoffice.global.common.PageResponse;
@@ -25,6 +26,7 @@ public class UserController {
 
     private final UserService userService;
     private final AccessLogService accessLogService;
+    private final UserPreferencesService userPreferencesService;
 
     @Operation(summary = "직원 목록 조회 [ADMIN]", description = "부서·상태·키워드로 필터링된 직원 목록을 페이지네이션으로 반환합니다.")
     @GetMapping
@@ -66,6 +68,27 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success("정보가 수정되었습니다.",
                         userService.updateMyInfo(userDetails.getUsername(), request)));
+    }
+
+    @Operation(summary = "내 환경설정 조회",
+               description = "알림·언어·테마·푸시 토큰 설정을 반환합니다. 설정이 없으면 기본값으로 생성합니다.")
+    @GetMapping("/me/preferences")
+    public ResponseEntity<ApiResponse<UserPreferencesResponse>> getMyPreferences(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("정상 조회되었습니다.",
+                        userPreferencesService.getMyPreferences(userDetails.getUsername())));
+    }
+
+    @Operation(summary = "내 환경설정 수정",
+               description = "알림·언어·테마·푸시 토큰을 부분 수정합니다. null 필드는 기존 값을 유지합니다.")
+    @PutMapping("/me/preferences")
+    public ResponseEntity<ApiResponse<UserPreferencesResponse>> updateMyPreferences(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid UserPreferencesUpdateRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success("환경설정이 수정되었습니다.",
+                        userPreferencesService.updateMyPreferences(userDetails.getUsername(), request)));
     }
 
     @Operation(summary = "직원 상세 조회 [ADMIN]")
