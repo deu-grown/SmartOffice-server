@@ -1,12 +1,12 @@
 # 백엔드 수정 마스터플랜
 
 > 작성일: 2026-05-15 · 단일 sprint 정책 전환: 2026-05-15
-> 상태: 단일 sprint 진입 대기 (#13 완료, 잔여 15건 묶음 단위 처리)
+> 상태: 묶음 1~5 전체 완료 (#13 별도 PR + 잔여 15건 처리 완료, 2026-05-15) — 단일 PR open + push 대기
 > 입력: `BACKEND_SUGGESTIONS.md` #1~#16 + `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 잔존 결함 추적표 #1~#10
 > **단일 sprint / 단일 PR / push 마지막 1회**
 > 작업 브랜치: `feature/backend-fixes` (server 레포, main 기반, long-lived)
 > 머지 정책: 본 sprint 전체 항목을 **단일 PR 1개**로 머지 (branch protection rule 준수, push 는 sprint 종료 시 1회)
-> 다음 단계: 별도 plan mode 세션에서 묶음 1 (#7·#11) 진단 진입
+> 다음 단계: 단일 PR open + push (sprint 종료)
 
 본 문서는 SmartOffice-server 백엔드 수정 작업의 단일 진실 공급원이다. `BACKEND_SUGGESTIONS.md` 와의 책임 분담은 다음과 같다.
 
@@ -314,13 +314,13 @@
 | 4 | 4-a Vehicle 엔티티 (V11) | 완료 | `848ff31` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 옵션 A. Vehicle 엔티티 + CRUD 5 + VehicleType enum. 단위/통합 테스트 8 |
 | 4 | 4-b ParkingReservation 엔티티 (V12) | 완료 | `b7d9809` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ParkingReservation 엔티티 + CRUD 5 + 상태 RESERVED/PARKED/EXITED. 단위/통합 테스트 7. V11(vehicle)/V12(parking_reservation) 분리 |
 | 4 | 묶음 4 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE curl 통합 흐름 (Vehicle 생성 → Reservation 연결 → 입차 PARKED → DELETE 정리) 통과. web 미구현 → SUGGESTIONS #4 append |
-| 5 | #1 guest 도메인 | 대기 | — | — | — | — | web 미구현 — curl 검증 + SUGGESTIONS append |
-| 5 | #2 Refresh Token httpOnly | 대기 | — | — | — | — | BE 수정 + web SUGGESTIONS append |
-| 5 | #3 user_preferences | 대기 | — | — | — | — | web 미구현 — curl 검증 + SUGGESTIONS append |
-| 5 | #4 OpenAPI 보강 | 대기 | — | — | — | — | 시연 가능 |
-| 5 | #5 errorCode 필드 | 대기 | — | — | — | — | 시연 가능 |
-| 5 | #6 reservation 권한 분기 | 대기 | — | — | — | — | 시연 가능 + SUGGESTIONS append |
-| 5 | 묶음 5 시각 검증 | 대기 | — | — | — | — | sprint 종료 |
+| 5 | #1 guest 도메인 | 완료 | `d957e29` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | guests V13 + GuestStatus 4종 + CRUD 5 + check-in/out. ErrorCode 3종. curl 전수 검증 (체크인 재호출 400 포함) |
+| 5 | #2 Refresh Token httpOnly | 완료 | `fbc2b1b` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | RefreshTokenCookieProvider + CORS allowCredentials. refresh 쿠키 우선·body 폴백 (web 미수정 호환). curl Set-Cookie(HttpOnly·SameSite=Lax) + 쿠키 refresh 검증 |
+| 5 | #3 user_preferences | 완료 | `bee8336` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | user_preferences V14 + GET/PUT /users/me/preferences. lazy 기본값 생성. curl 검증 |
+| 5 | #4 OpenAPI 보강 | 완료 | `25a70a5` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 대시보드 DTO 4종 @Schema (description+example). /v3/api-docs 노출 확인 |
+| 5 | #5 errorCode 필드 | 완료 | `e500388` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ApiResponse.errorCode (정상 응답 직렬화 제외) + 전 핸들러 ErrorCode.name() 전파. curl 4xx errorCode 필드 확인 |
+| 5 | #6 reservation 권한 분기 | 완료 | `b6e282c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | getReservation 본인/ADMIN 검증 추가 (수정·취소와 동일 패턴) + 레이어 분담 문서화. curl ADMIN 200 / 404 검증 |
+| 5 | 묶음 5 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE 빌드/테스트(406 통과) + curl 전수 검증. web 후속: SUGGESTIONS #5(guest UI)·#6(refresh 쿠키 web 변경)·#7(preferences UI) append |
 | 마지막 | 단일 PR open + push | 대기 | — | — | — | — | 모든 묶음 종료 후 1회 push |
 
 ---

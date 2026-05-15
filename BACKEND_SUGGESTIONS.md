@@ -25,6 +25,8 @@
 
 **우선순위 근거**: 프론트 UI 가 이미 외주 단계에서 들어와 있어 mock 의존도가 가장 높다. 도입 시 사이드바 메뉴 즉시 복구 가능.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`d957e29`, 2026-05-15) — `guest` 도메인 신설. `guests` 테이블(V13) + GuestStatus enum (SCHEDULED→VISITING→COMPLETED, CANCELLED). CRUD 5종 + 체크인/체크아웃 (`/api/v1/guests`, ADMIN). 체크인은 SCHEDULED, 체크아웃은 VISITING 상태에서만 허용. ErrorCode 3종 추가 (GUEST_NOT_FOUND·GUEST_CHECK_IN/OUT_NOT_ALLOWED). curl 전수 검증 (등록→목록 필터→체크인→체크인 재호출 400→체크아웃→삭제). NFC 임시 카드 연동(선택 제안)은 미채택. web 후속: GuestTable mock 을 실 API 로 전환 + 사이드바 메뉴 복구 — web/SUGGESTIONS.md #5 append.
+
 ---
 
 ## 2. (저) Refresh Token httpOnly 쿠키 전환 — 후속 제안
@@ -42,6 +44,8 @@
 
 **본 통합 작업에서는 채택하지 않음** — SecurityConfig·운영 도메인·CORS 정책 변경이 동반되므로 별도 보안 강화 작업으로 분리.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`fbc2b1b`, 2026-05-15) — Refresh Token httpOnly 쿠키 전환. `RefreshTokenCookieProvider` 신설 (쿠키 발급·소거·추출). login 응답에 `Set-Cookie: refreshToken` (HttpOnly·SameSite=Lax·Path=/api/v1/auth·Max-Age=7일). refresh 는 쿠키 우선 사용·부재 시 body 폴백 (web 미수정 호환), logout 은 쿠키 즉시 만료. SecurityConfig CORS `allowCredentials(true)` + 명시적 origin 목록. secure/same-site 는 프로파일별 설정 (로컬 http=false, 운영 https=true·`app.refresh-cookie.*`). curl Set-Cookie 헤더 + 쿠키 기반 refresh 검증. web 후속: axios `withCredentials: true` 활성화 + `tokenStorage.refreshToken` 제거 — web/SUGGESTIONS.md #6 append.
+
 ---
 
 ## 3. (저) "시스템 설정" 페이지용 API 정리
@@ -58,6 +62,8 @@
 
 본 통합 작업에서는 "시스템 설정" 라우트를 *준비 중* placeholder 로 두고 진행했다.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`bee8336`, 2026-05-15) — `user_preferences` 테이블(V14) 신설 (제안 옵션 중 별도 테이블 채택). user_id 가 PK 이자 users FK (1:1). GET/PUT `/api/v1/users/me/preferences` (본인, JWT subject 기준). 필드: notifications_enabled·language·theme·push_token. 설정 행은 최초 조회/수정 시 기본값(알림 on·ko·light)으로 lazy 생성. PUT 은 부분 수정 (null 필드 기존 값 유지). curl 검증 (lazy 기본값 생성 + 부분 수정). web 후속: 시스템 설정 페이지가 preferences API 채택 — web/SUGGESTIONS.md #7 append.
+
 ---
 
 ## 4. (저) Dashboard 응답 타입 OpenAPI 보강 + openapi-typescript 검토
@@ -72,6 +78,8 @@
   - nullable / required 표기 일관성
   - 예시값(`@Schema(example = ...)`) — 자동 타입 생성에는 영향 없지만 Swagger UI 가독성에 기여
 - 본 통합 작업의 프론트 `src/features/{domain}/types.ts` 는 수동 1:1 매핑 중. 도메인 수가 늘면 자동 생성 검토 가치 ↑.
+
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`25a70a5`, 2026-05-15) — 대시보드 응답 DTO 4종 (DashboardSummaryResponse·AttendanceTodayResponse·RecentAccessResponse·SensorCurrentResponse)에 `@Schema` (description + example) 추가. `/v3/api-docs` 노출 확인. openapi-typescript 도입은 web 측 판단 사항으로 본 백엔드 작업 범위 외 — 전 도메인 DTO 일괄 annotation 도 후속 과제로 잔존.
 
 ---
 
@@ -99,6 +107,8 @@
 
 **출처 세션**: `SmartOffice-web` 플랜 2 인증 도메인 마이그레이션 (2026-05).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`e500388`, 2026-05-15) — `ApiResponse` 에 `errorCode` 필드 추가 (값 = `ErrorCode.name()` enum 식별자, 정상 응답에서는 `@JsonInclude(NON_NULL)` 로 직렬화 제외). `GlobalExceptionHandler` 전 핸들러 + `JwtAuthenticationEntryPoint`/`JwtAccessDeniedHandler` 가 식별자 전파 (검증 오류는 `INVALID_INPUT`, 미인증은 `UNAUTHENTICATED`, 권한 거부는 `ACCESS_DENIED`). curl 4xx 응답 `errorCode` 필드 확인 (`INVALID_CREDENTIALS`·`GUEST_CHECK_IN_NOT_ALLOWED`·`RESERVATION_NOT_FOUND` 등).
+
 ---
 
 ## 6. (하 / 검토) `reservation` 도메인 service-layer 본인/ADMIN 분기 일관성 점검
@@ -122,6 +132,8 @@
 **우선순위 근거**: 현재 동작에 문제 없음. 일관성·유지보수성·문서 정확도 차원의 개선이라 후순위.
 
 **출처 세션**: `SmartOffice-web` 플랜 3 사전 분석 — `reservation` 도메인 권한 분석 (2026-05).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`b6e282c`, 2026-05-15) — `reservation` 단건 엔드포인트 권한 검증 위치 통일. 진단 결과 `getReservation`(GET /{id})이 컨트롤러 `@PreAuthorize` 도 service 본인/ADMIN 검증도 없어 임의 인증 사용자가 타인 예약을 조회할 수 있던 불일치를 확인 — 수정·취소와 동일하게 service 레이어 본인/ADMIN 검증을 추가. `ReservationController` 에 "컬렉션 단위 = 컨트롤러 `@PreAuthorize` / 단건 = service 본인·ADMIN" 레이어 분담을 javadoc 으로 문서화. `@SelfOrAdmin` 공용 어노테이션 도입은 현 도메인 규모에서 과설계로 판단해 미채택. web(ADMIN 클라이언트)은 영향 없음 — `checkOwnership` 가 ADMIN 은 항상 통과.
 
 ---
 
