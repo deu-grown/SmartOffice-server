@@ -66,7 +66,7 @@ public interface SensorLogRepository extends JpaRepository<SensorLog, Long> {
               AND sl.sensor_type = 'POWER'
               AND sl.logged_at BETWEEN :start AND :end
               AND (:deviceId IS NULL OR sl.devices_id = :deviceId)
-            GROUP BY DATE_FORMAT(sl.logged_at, '%Y-%m-%d %H'), sl.devices_id, d.device_name
+            GROUP BY DATE_FORMAT(sl.logged_at, '%Y-%m-%dT%H:00:00'), sl.devices_id, d.device_name
             ORDER BY hour_at ASC
             """, nativeQuery = true)
     List<HourlyPowerProjection> findHourlyPowerProjection(
