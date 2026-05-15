@@ -35,6 +35,8 @@ public class ParkingServiceImpl implements ParkingService {
             throw new CustomException(ErrorCode.DUPLICATE_SPOT_NUMBER);
         }
 
+        validatePosition(zone.getZoneId(), request.getPositionX(), request.getPositionY(), null);
+
         Device device = resolveDevice(request.getDeviceId(), null);
 
         ParkingSpot spot = ParkingSpot.builder()
@@ -61,6 +63,8 @@ public class ParkingServiceImpl implements ParkingService {
                         spot.getZone().getZoneId(), request.getSpotNumber(), spotId)) {
             throw new CustomException(ErrorCode.DUPLICATE_SPOT_NUMBER);
         }
+
+        validatePosition(spot.getZone().getZoneId(), request.getPositionX(), request.getPositionY(), spotId);
 
         Device device = resolveDevice(request.getDeviceId(), spotId);
 
@@ -143,6 +147,24 @@ public class ParkingServiceImpl implements ParkingService {
                 .occupied(spot.isOccupied())
                 .updatedAt(spot.getUpdatedAt())
                 .build();
+    }
+
+    private void validatePosition(Long zoneId, Integer positionX, Integer positionY, Long excludeSpotId) {
+        boolean xNull = positionX == null;
+        boolean yNull = positionY == null;
+        // 둘 다 null: grid fallback (정상). update 의 경우 좌표 변경 의사 없음.
+        if (xNull && yNull) return;
+        // null XOR: 좌표 시스템 의미상 X/Y 는 한 쌍이라야 함.
+        if (xNull != yNull) {
+            throw new CustomException(ErrorCode.INVALID_POSITION_PAIR);
+        }
+        // 둘 다 not null: 같은 zone 내 좌표 충돌 검증.
+        boolean conflict = (excludeSpotId == null)
+                ? parkingSpotRepository.existsByZone_ZoneIdAndPositionXAndPositionY(zoneId, positionX, positionY)
+                : parkingSpotRepository.existsByZone_ZoneIdAndPositionXAndPositionYAndSpotIdNot(zoneId, positionX, positionY, excludeSpotId);
+        if (conflict) {
+            throw new CustomException(ErrorCode.DUPLICATE_SPOT_POSITION);
+        }
     }
 
     private Device resolveDevice(Long deviceId, Long excludeSpotId) {

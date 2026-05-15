@@ -20,6 +20,11 @@ public interface ParkingSpotRepository extends JpaRepository<ParkingSpot, Long> 
 
     boolean existsByDevice_DevicesIdAndSpotIdNot(Long deviceId, Long spotId);
 
+    boolean existsByZone_ZoneIdAndPositionXAndPositionY(Long zoneId, Integer positionX, Integer positionY);
+
+    boolean existsByZone_ZoneIdAndPositionXAndPositionYAndSpotIdNot(
+            Long zoneId, Integer positionX, Integer positionY, Long spotId);
+
     @Query("""
             SELECT s FROM ParkingSpot s
             LEFT JOIN FETCH s.device

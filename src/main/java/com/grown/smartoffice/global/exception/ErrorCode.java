@@ -43,6 +43,7 @@ public enum ErrorCode {
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
     DEVICE_SPOT_MISMATCH(400, "장치 ID와 주차면 매핑이 일치하지 않습니다."),
+    INVALID_POSITION_PAIR(400, "주차면 좌표는 X/Y 둘 다 입력하거나 둘 다 비워야 합니다."),
 
     // ── 409 Conflict ─────────────────────────────────────
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
@@ -63,6 +64,7 @@ public enum ErrorCode {
     NO_APPLICABLE_SALARY_SETTING(409, "해당 직급의 적용 가능한 급여 기준이 없습니다."),
     DUPLICATE_ASSET_NUMBER(409, "이미 사용 중인 자산 번호입니다."),
     DUPLICATE_SPOT_NUMBER(409, "동일 구역 내 중복된 주차면 번호입니다."),
+    DUPLICATE_SPOT_POSITION(409, "동일 구역 내 중복된 주차면 좌표입니다."),
     DEVICE_ALREADY_MAPPED(409, "이미 다른 주차면에 매핑된 장치입니다."),
     RESERVATION_TIME_CONFLICT(400, "해당 시간대에 이미 예약이 존재합니다."),
     RESERVATION_ALREADY_CANCELLED(400, "이미 취소된 예약입니다."),
