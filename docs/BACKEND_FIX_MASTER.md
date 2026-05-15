@@ -1,12 +1,12 @@
 # 백엔드 수정 마스터플랜
 
 > 작성일: 2026-05-15 · 단일 sprint 정책 전환: 2026-05-15
-> 상태: 묶음 1~5 전체 완료 (#13 별도 PR + 잔여 15건 처리 완료, 2026-05-15) — 단일 PR open + push 대기
+> 상태: 묶음 1~5 전체 완료 + 단일 PR open (PR #28, 2026-05-15) — 사용자 머지 대기
 > 입력: `BACKEND_SUGGESTIONS.md` #1~#16 + `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 잔존 결함 추적표 #1~#10
 > **단일 sprint / 단일 PR / push 마지막 1회**
 > 작업 브랜치: `feature/backend-fixes` (server 레포, main 기반, long-lived)
 > 머지 정책: 본 sprint 전체 항목을 **단일 PR 1개**로 머지 (branch protection rule 준수, push 는 sprint 종료 시 1회)
-> 다음 단계: 단일 PR open + push (sprint 종료)
+> 다음 단계: PR #28 리뷰·머지 (사용자 진행)
 
 본 문서는 SmartOffice-server 백엔드 수정 작업의 단일 진실 공급원이다. `BACKEND_SUGGESTIONS.md` 와의 책임 분담은 다음과 같다.
 
@@ -321,7 +321,7 @@
 | 5 | #5 errorCode 필드 | 완료 | `e500388` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ApiResponse.errorCode (정상 응답 직렬화 제외) + 전 핸들러 ErrorCode.name() 전파. curl 4xx errorCode 필드 확인 |
 | 5 | #6 reservation 권한 분기 | 완료 | `b6e282c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | getReservation 본인/ADMIN 검증 추가 (수정·취소와 동일 패턴) + 레이어 분담 문서화. curl ADMIN 200 / 404 검증 |
 | 5 | 묶음 5 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE 빌드/테스트(406 통과) + curl 전수 검증. web 후속: SUGGESTIONS #5(guest UI)·#6(refresh 쿠키 web 변경)·#7(preferences UI) append |
-| 마지막 | 단일 PR open + push | 대기 | — | — | — | — | 모든 묶음 종료 후 1회 push |
+| 마지막 | 단일 PR open + push | 완료 | — | 2026-05-15 | 2026-05-15 | — | [PR #28](https://github.com/deu-grown/SmartOffice-server/pull/28) open (feature/backend-fixes → main, 28 커밋). 머지는 사용자 진행 |
 
 ---
 
