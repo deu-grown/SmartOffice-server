@@ -151,7 +151,11 @@ ApiResponse<T> {
 
 ---
 
-## 현재 구현 상태 (2026-05-13 기준)
+## 현재 구현 상태 (2026-05-15 기준)
+
+> **2026-05 SmartOffice-web 통합 작업 종료**. `BACKEND_SUGGESTIONS.md` 누적 16 항목(#1~#16, web 통합 중 발견 #7~#16 포함) — 본 백엔드 수정 sprint 의 입력.
+> **백엔드 수정 sprint 진행 중** (2026-05-15 시작). 단일 sprint / 단일 PR / push 마지막 1회 / 묶음 단위 시각 검증 게이트 — 마스터플랜 `docs/BACKEND_FIX_MASTER.md` 참조. #13 완료 (PR #27, `a32d146`), 잔여 15건 묶음 1~5 처리 대기. 작업 브랜치 `feature/backend-fixes`.
+> web 측 잔존 결함 추적표는 `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 참조.
 
 ### 완전 구현된 도메인 (9개 도메인 / 17개 컨트롤러)
 
