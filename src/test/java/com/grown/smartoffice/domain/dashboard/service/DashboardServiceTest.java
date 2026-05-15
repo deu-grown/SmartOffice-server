@@ -9,6 +9,7 @@ import com.grown.smartoffice.domain.dashboard.dto.AttendanceTodayResponse;
 import com.grown.smartoffice.domain.dashboard.dto.DashboardSummaryResponse;
 import com.grown.smartoffice.domain.dashboard.dto.RecentAccessResponse;
 import com.grown.smartoffice.domain.dashboard.dto.SensorCurrentResponse;
+import com.grown.smartoffice.domain.device.entity.DeviceStatus;
 import com.grown.smartoffice.domain.device.repository.DeviceRepository;
 import com.grown.smartoffice.domain.reservation.entity.ReservationStatus;
 import com.grown.smartoffice.domain.reservation.repository.ReservationRepository;
@@ -70,7 +71,7 @@ class DashboardServiceTest {
     @DisplayName("getSummary — 총 직원/장치/오늘 예약 집계 정상")
     void getSummary() {
         given(userRepository.countByStatus(UserStatus.ACTIVE)).willReturn(12L);
-        given(deviceRepository.countByDeviceStatus("ACTIVE")).willReturn(15L);
+        given(deviceRepository.countByDeviceStatus(DeviceStatus.ACTIVE)).willReturn(15L);
         given(reservationRepository.countTodayConfirmed(eq(ReservationStatus.CONFIRMED), any(), any()))
                 .willReturn(5L);
 
@@ -79,6 +80,22 @@ class DashboardServiceTest {
         assertThat(res.getTotalUsers()).isEqualTo(12);
         assertThat(res.getActiveDevices()).isEqualTo(15);
         assertThat(res.getTodayReservations()).isEqualTo(5);
+        assertThat(res.getPendingApprovals()).isZero();
+    }
+
+    @Test
+    @DisplayName("getSummary — 데이터 없음 케이스 (모든 카운트 0L → 4 필드 모두 0)")
+    void getSummary_emptyData() {
+        given(userRepository.countByStatus(UserStatus.ACTIVE)).willReturn(0L);
+        given(deviceRepository.countByDeviceStatus(DeviceStatus.ACTIVE)).willReturn(0L);
+        given(reservationRepository.countTodayConfirmed(eq(ReservationStatus.CONFIRMED), any(), any()))
+                .willReturn(0L);
+
+        DashboardSummaryResponse res = dashboardService.getSummary();
+
+        assertThat(res.getTotalUsers()).isZero();
+        assertThat(res.getActiveDevices()).isZero();
+        assertThat(res.getTodayReservations()).isZero();
         assertThat(res.getPendingApprovals()).isZero();
     }
 
