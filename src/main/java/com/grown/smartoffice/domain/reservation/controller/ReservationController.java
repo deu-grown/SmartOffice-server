@@ -18,6 +18,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+/**
+ * 예약 관리 컨트롤러.
+ *
+ * <p>권한 검증 레이어 분담:
+ * <ul>
+ *   <li>컬렉션 단위 ADMIN 전용 엔드포인트(전체 목록)는 컨트롤러 {@code @PreAuthorize} 로 검증.
+ *   <li>단건 엔드포인트(상세·수정·취소·체크인)는 본인/ADMIN 분기가 필요하므로
+ *       서비스 레이어가 호출자 email 기준으로 일관 검증한다.
+ * </ul>
+ */
 @Tag(name = "Reservations", description = "예약 관리")
 @RestController
 @RequiredArgsConstructor
@@ -35,11 +45,13 @@ public class ReservationController {
                         reservationService.createReservation(request, userDetails.getUsername())));
     }
 
-    @Operation(summary = "예약 상세 조회")
+    @Operation(summary = "예약 상세 조회 (본인/ADMIN)")
     @GetMapping("/api/v1/reservations/{id}")
-    public ResponseEntity<ApiResponse<ReservationResponse>> getReservation(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ReservationResponse>> getReservation(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success("예약 상세 조회가 완료되었습니다.",
-                reservationService.getReservation(id)));
+                reservationService.getReservation(id, userDetails.getUsername())));
     }
 
     @Operation(summary = "예약 수정 (본인/ADMIN)")

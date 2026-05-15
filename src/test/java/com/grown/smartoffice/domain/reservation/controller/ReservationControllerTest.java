@@ -114,13 +114,24 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /reservations/{id} — 없는 예약 → 404")
-    @WithMockEmployeeUser
+    @WithMockEmployeeUser(email = "me@grown.com")
     void detail_notFound_404() throws Exception {
-        given(reservationService.getReservation(999L))
+        given(reservationService.getReservation(eq(999L), eq("me@grown.com")))
                 .willThrow(new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         mockMvc.perform(get("/api/v1/reservations/{id}", 999))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /reservations/{id} — 본인 예약 상세 200 (호출자 email 서비스 전달)")
+    @WithMockEmployeeUser(email = "me@grown.com")
+    void detail_employee_200() throws Exception {
+        given(reservationService.getReservation(eq(100L), eq("me@grown.com"))).willReturn(sample());
+
+        mockMvc.perform(get("/api/v1/reservations/{id}", 100))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.reservationId").value(100));
     }
 
     @Test
