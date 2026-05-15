@@ -19,7 +19,7 @@
 - **Cache**: Redis 7
 - **ORM**: Spring Data JPA (JpaRepository + @Query JPQL/nativeQuery)
 - **인증**: Spring Security + JWT (Access 30분 / Refresh 7일)
-- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터 / V6 NFC 카드 상태 컬럼 추가 / V7 전력·예약 시드 / V8 시연용 풍부한 더미데이터)
+- **마이그레이션**: Flyway (V1 스키마 / V2 초기 데이터 / V3 개발 샘플 데이터 / V4 주차·자산·전력 테이블 / V5 통합 테스트 더미데이터 / V6 NFC 카드 상태 컬럼 추가 / V7 전력·예약 시드 / V8 시연용 풍부한 더미데이터 / V9 access_logs ALLOW→APPROVED 통일 / V10 parking_spots 좌표 UNIQUE 제약 / V11 vehicle 테이블 / V12 parking_reservation 테이블 / V13 guests 테이블 / V14 user_preferences 테이블)
 - **IoT 통신**: MQTT (Eclipse Paho 1.2.5, QoS Level 1)
 - **API 문서**: Springdoc OpenAPI 3.0.2 (Swagger UI: `/swagger-ui.html`)
 - **인프라**: AWS EC2 t3.small, Docker, GitHub Actions CI/CD
@@ -57,19 +57,20 @@ smartoffice/{zone_id}/command           # 제어 명령 (서버 → RPi)
 
 ## ERD 핵심 관계 요약
 
-총 17개 테이블 / 9개 도메인 (상세 스키마는 `@docs/erd.sql` 참조)
+총 21개 테이블 / 10개 도메인 (상세 스키마는 `@docs/erd.sql` 참조)
 
 | 도메인    | 테이블 | Flyway |
 | --------- | ------ | ------ |
-| 회원/인증 | `departments`, `users`, `refresh_tokens` | V1 |
+| 회원/인증 | `departments`, `users`, `refresh_tokens`, `user_preferences` | V1 / V14 |
 | 공간/장치 | `zones` (self-ref 계층), `devices` | V1 |
 | 출입/근태 | `nfc_cards`, `access_logs`, `attendance`, `monthly_attendance` | V1 |
 | 급여/ERP  | `salary_settings`, `salary_records` | V1 |
 | 환경/IoT  | `sensor_logs`, `control_commands` | V1 |
 | 예약      | `reservations` | V1 |
-| 주차      | `parking_spots` | V4 |
+| 주차      | `parking_spots`, `vehicle`, `parking_reservation` | V4 / V11 / V12 |
 | 자산 관리 | `assets` | V4 |
 | 전력 관리 | `power_billing` | V4 |
+| 방문객    | `guests` | V13 |
 
 ### 핵심 데이터 흐름
 
@@ -102,7 +103,8 @@ NFC 태그
 
 ```java
 ApiResponse<T> {
-    String code;    // "success" | "error"
+    String code;       // "success" | "error"
+    String errorCode;  // 에러 응답 전용 — ErrorCode enum name (정상 응답에서는 null, 직렬화 제외)
     String message;
     T data;
 }
@@ -154,15 +156,15 @@ ApiResponse<T> {
 ## 현재 구현 상태 (2026-05-15 기준)
 
 > **2026-05 SmartOffice-web 통합 작업 종료**. `BACKEND_SUGGESTIONS.md` 누적 16 항목(#1~#16, web 통합 중 발견 #7~#16 포함) — 본 백엔드 수정 sprint 의 입력.
-> **백엔드 수정 sprint 진행 중** (2026-05-15 시작). 단일 sprint / 단일 PR / push 마지막 1회 / 묶음 단위 시각 검증 게이트 — 마스터플랜 `docs/BACKEND_FIX_MASTER.md` 참조. #13 완료 (PR #27, `a32d146`), 잔여 15건 묶음 1~5 처리 대기. 작업 브랜치 `feature/backend-fixes`.
+> **백엔드 수정 sprint 묶음 1~5 전체 완료** (2026-05-15). 단일 sprint / 단일 PR / push 마지막 1회 / 묶음 단위 시각 검증 게이트 — 마스터플랜 `docs/BACKEND_FIX_MASTER.md` 참조. #13 (PR #27, `a32d146`) 별도 머지 후, 잔여 15건은 단일 PR #28 (`feature/backend-fixes` → main) open — 사용자 머지 대기. 아래 도메인·엔드포인트 현황은 본 sprint 결과를 반영한다.
 > web 측 잔존 결함 추적표는 `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 참조.
 
-### 완전 구현된 도메인 (9개 도메인 / 17개 컨트롤러)
+### 완전 구현된 도메인 (10개 도메인 / 20개 컨트롤러)
 
 | 도메인 | 주요 구성요소 |
 |--------|--------------|
 | `auth` | 로그인, 로그아웃, 토큰 갱신, CustomUserDetailsService, 테스트 로그인(`TestAuthController`, `!prod` 전용) |
-| `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리, 특정 직원 출입 이력 조회 |
+| `user` | 직원 CRUD, 페이지네이션·필터, 퇴사 처리, 특정 직원 출입 이력 조회, 내 환경설정 조회·수정 API 2개 (GET·PUT `/users/me/preferences`) |
 | `department` | 부서 CRUD |
 | `attendance` | 태그 기록, 조회, 수동 보정, 배치 집계, 스케줄러 |
 | `salary` | 급여 설정 CRUD, 월별 산출, 확정, 조회 |
@@ -176,7 +178,9 @@ ApiResponse<T> {
 | `control` | 제어 명령 발송·상세·이력 API 3개, MQTT 발송, ControlStatus enum |
 | `reservation` | 예약 CRUD 8개 API, NFC 체크인, 구역별·내 예약 조회, 시간 중복 검증 |
 | `power` | 전력 관리 5개 API (실시간·시간별 이력·월 요금 조회·요금 수동 산출), sensor_logs 집계 |
-| `parking` | 주차면 CRUD 4개 API + 구역별 현황·지도 2개 API + IoT 점유 상태 업데이트 1개 API, SpotType/SpotStatus enum, deviceId 일치 검증 |
+| `parking` | 주차면 CRUD 4개 API + 구역별 현황·지도 2개 API + IoT 점유 상태 업데이트 1개 API, SpotType/SpotStatus enum, deviceId 일치 검증 / 주차 예약(`ParkingReservation`) CRUD 5개 API, 예약 상태 RESERVED·PARKED·EXITED |
+| `vehicle` | 차량 대장 CRUD 5개 API, VehicleType enum (STAFF·VISITOR), 번호판 UNIQUE |
+| `guest` | 방문객 CRUD 5개 API + 체크인·체크아웃 2개 API, GuestStatus enum (SCHEDULED·VISITING·COMPLETED·CANCELLED) |
 
 ---
 
