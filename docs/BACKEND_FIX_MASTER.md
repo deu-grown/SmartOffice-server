@@ -311,9 +311,9 @@
 | 3 | #12 ControlCommandType enum | 완료 | `4af6d36` (fix) + `ec58654` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | enum 5종 + INVALID_COMMAND_TYPE. curl POWER_ON 400 거부 |
 | 3 | #15 GET /parking/zones | 완료 | `513732c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 주차면 보유 zone + totalSpots/occupiedSpots. curl zone 2건 |
 | 3 | 묶음 3 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 4건 통과 + web 5개 페이지 회귀 0건. 신설 EP web 채택은 후속 (web/SUGGESTIONS.md #3) |
-| 4 | 4-a Vehicle 엔티티 (V11) | 대기 | — | — | — | — | 옵션 A 채택 |
-| 4 | 4-b ParkingReservation 엔티티 (V11) | 대기 | — | — | — | — | Vehicle FK |
-| 4 | 묶음 4 시각 검증 | 대기 | — | — | — | — | 4-b 종료 시 통합. web 미구현 시 SUGGESTIONS append |
+| 4 | 4-a Vehicle 엔티티 (V11) | 완료 | `848ff31` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 옵션 A. Vehicle 엔티티 + CRUD 5 + VehicleType enum. 단위/통합 테스트 8 |
+| 4 | 4-b ParkingReservation 엔티티 (V12) | 완료 | `b7d9809` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ParkingReservation 엔티티 + CRUD 5 + 상태 RESERVED/PARKED/EXITED. 단위/통합 테스트 7. V11(vehicle)/V12(parking_reservation) 분리 |
+| 4 | 묶음 4 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE curl 통합 흐름 (Vehicle 생성 → Reservation 연결 → 입차 PARKED → DELETE 정리) 통과. web 미구현 → SUGGESTIONS #4 append |
 | 5 | #1 guest 도메인 | 대기 | — | — | — | — | web 미구현 — curl 검증 + SUGGESTIONS append |
 | 5 | #2 Refresh Token httpOnly | 대기 | — | — | — | — | BE 수정 + web SUGGESTIONS append |
 | 5 | #3 user_preferences | 대기 | — | — | — | — | web 미구현 — curl 검증 + SUGGESTIONS append |

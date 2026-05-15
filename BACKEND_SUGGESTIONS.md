@@ -458,6 +458,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 0단계 검증 (차이 C, 2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 4 (`848ff31` 4-a Vehicle V11 + `b7d9809` 4-b ParkingReservation V12, 2026-05-15) — 옵션 (A) 채택. Vehicle 엔티티 (plate_number UNIQUE + owner_user_id FK users + type STAFF/VISITOR + purpose) + ParkingReservation 엔티티 (vehicle FK + zone FK + spot FK nullable + status RESERVED/PARKED/EXITED + reserved_at/entry_at/exit_at). 각 CRUD 5종 컨트롤러 (`/api/v1/vehicles`, `/api/v1/parking/reservations`, ADMIN). 단위/통합 테스트 15건. curl 통합 흐름 검증: Vehicle 생성(STAFF, ownerUserId FK) → ParkingReservation 연결(RESERVED) → 입차 PUT(PARKED, spot 배정 + entry_at) → CRUD DELETE 정리 모두 정상. web 후속: ParkingManagement 차량/예약 UI 신설 권장 (web/SUGGESTIONS.md #4).
+
 ---
 
 ## [2026-05-14] (저~중) GET /api/v1/parking/zones — 주차면 보유 zone 목록 조회 엔드포인트 신설
