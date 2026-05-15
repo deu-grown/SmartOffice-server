@@ -258,6 +258,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 G2 `PowerCurrentWidget` 결함 분석 — 옵션 4(자체 셀렉터 + 임시 하드코딩 + BACKEND_SUGGESTIONS) 채택 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`6445b64`, 2026-05-15) — `GET /api/v1/power/zones` 신설. `sensor_logs.sensor_type='POWER'` distinct zone 집계 + `meterCount`. 신규 DTO 2종 (PowerZoneListResponse + PowerZoneProjection) + SensorLogRepository.findPowerZones() nativeQuery. curl: 200 + zone 4건 (2/4/5/7, 각 meterCount=1). web 후속: `POWER_ZONES_TEMP` 제거 → `usePowerZones()` 전환 권장 (web/SUGGESTIONS.md #3).
+
 ---
 
 ## 10. (저~중) `GET /api/v1/zones/{id}` 신설 권장
@@ -300,6 +302,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: 저~중. 현재 동작 가능하나, zone 증가 또는 detail 전용 필드 확장 시점에 전환 필요.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 0단계 read-only 검증 (차이 #1) — `ZoneListItemResponse` DTO 충족성 검증 완료 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`154636a`, 2026-05-15) — `GET /api/v1/zones/{id}` 신설. `ZoneListItemResponse` 6 필드 재사용 (별도 ZoneDetailResponse 미신설 — 현재 detail 표시 필드 100% 충족). `ZoneService.getZoneDetail(Long)` 부재 시 ZONE_NOT_FOUND. curl: `GET /zones/5` 200 + 6 필드 정합. web 후속: `useZoneDetail(id)` 의 `useZones()` find 우회 제거 → `useQuery` 전환 권장 (web/SUGGESTIONS.md #3).
 
 ---
 
@@ -364,6 +368,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: 중. 현재 web 하드코딩으로 동작 가능하나, IoT 측 컨벤션 변경 또는 신규 명령 추가 시 web 수동 동기화 부담 + 잘못된 string 발송 가능성. 시연 후 정리 권장.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 시각 검증 후속 (ControlPanel 명령 종류 검토, 2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`4af6d36` fix + `ec58654` test, 2026-05-15) — 옵션 (A) 채택. 신규 enum `ControlCommandType` (AC | LIGHT | FAN | DOOR_LOCK | SET_TEMPERATURE). `ControlCommand.commandType` 컬럼 String → enum + `@Enumerated(EnumType.STRING)` (DB varchar(15) 호환). `ControlService.sendCommand` 에서 `ControlCommandType.valueOf()` 변환 + `INVALID_COMMAND_TYPE` (400) 거부. curl: POST `/controls {"command":"POWER_ON"}` → 400 "지원하지 않는 제어 명령 유형입니다.". web `ControlPanel.QUICK_COMMANDS` (AC/LIGHT/FAN/DOOR_LOCK) 는 enum 과 정합 — web 변경 불필요.
 
 ---
 
@@ -489,6 +495,8 @@ GET /api/v1/parking/zones
 **우선순위**: 저~중 — 현재 web 우회 동작 가능. 백엔드 부하·UX 정합도 측면에서 채택 권장. dashboard/sensors-current 와 유사한 도메인별 zone 목록 패턴.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 시각 검증 결함 12-1 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`513732c`, 2026-05-15) — 옵션 (A) 채택. `GET /api/v1/parking/zones` 신설. 주차면 1건 이상 보유 zone 집계 + `totalSpots`/`occupiedSpots` 포함. 신규 DTO 2종 (ParkingZoneListResponse + ParkingZoneProjection) + ParkingSpotRepository.findParkingZones() JPQL projection. curl: 200 + zone 2건 (지하1층 15면/6점유, 지하2층 10면/4점유). web 후속: `useParkingSpots({})` distinct 우회 제거 → `useParkingZones()` 전환 권장 (web/SUGGESTIONS.md #3).
 
 ---
 

@@ -306,11 +306,11 @@
 | 2 | #8 V9 ALLOW→APPROVED | 완료 | `55a6c37` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | curl: ALLOW 0건 / APPROVED 61건 (이전 53+8). web 측 ALLOW literal 호환 제거 권장 SUGGESTIONS append |
 | 2 | #16 parking_spots V10 UNIQUE + null XOR | 완료 | `7975c49` (fix) + `3101713` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | UNIQUE 제약 + Service validatePosition (null XOR + 좌표 충돌) + ErrorCode 2건. curl: 동일 좌표 409 + null XOR 400 |
 | 2 | 묶음 2 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 검증 통과 (#8 ALLOW→APPROVED 정합 + #16 좌표 충돌 차단 정합). web 측 결함 발견(Select 영어 표시값 + ALLOW 옵션 잔존) → web/SUGGESTIONS.md #2 append |
-| 3 | #9 GET /power/zones | 대기 | — | — | — | — | 신설 엔드포인트 |
-| 3 | #10 GET /zones/{id} | 대기 | — | — | — | — | 신설 엔드포인트 |
-| 3 | #12 ControlCommandType enum | 대기 | — | — | — | — | enum 정합 |
-| 3 | #15 GET /parking/zones | 대기 | — | — | — | — | 신설 엔드포인트 |
-| 3 | 묶음 3 시각 검증 | 대기 | — | — | — | — | /zones 상세 + /power + /control + /parking |
+| 3 | #9 GET /power/zones | 완료 | `6445b64` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | POWER 미터 보유 zone 집계 + meterCount. curl zone 4건 |
+| 3 | #10 GET /zones/{id} | 완료 | `154636a` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ZoneListItemResponse 재사용. curl 6 필드 정합 |
+| 3 | #12 ControlCommandType enum | 완료 | `4af6d36` (fix) + `ec58654` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | enum 5종 + INVALID_COMMAND_TYPE. curl POWER_ON 400 거부 |
+| 3 | #15 GET /parking/zones | 완료 | `513732c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 주차면 보유 zone + totalSpots/occupiedSpots. curl zone 2건 |
+| 3 | 묶음 3 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 4건 통과 + web 5개 페이지 회귀 0건. 신설 EP web 채택은 후속 (web/SUGGESTIONS.md #3) |
 | 4 | 4-a Vehicle 엔티티 (V11) | 대기 | — | — | — | — | 옵션 A 채택 |
 | 4 | 4-b ParkingReservation 엔티티 (V11) | 대기 | — | — | — | — | Vehicle FK |
 | 4 | 묶음 4 시각 검증 | 대기 | — | — | — | — | 4-b 종료 시 통합. web 미구현 시 SUGGESTIONS append |
