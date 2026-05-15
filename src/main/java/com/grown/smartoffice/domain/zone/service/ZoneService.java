@@ -10,6 +10,8 @@ public interface ZoneService {
 
     List<ZoneListItemResponse> getZones(Long parentId, String zoneType);
 
+    ZoneListItemResponse getZoneDetail(Long id);
+
     ZoneUpdateResponse updateZone(Long id, ZoneUpdateRequest request);
 
     void deleteZone(Long id);
