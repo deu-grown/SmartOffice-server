@@ -51,9 +51,11 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public ReservationResponse getReservation(Long id) {
+    public ReservationResponse getReservation(Long id, String email) {
         Reservation r = reservationRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
+        // 단건 조회도 수정·취소와 동일하게 본인/ADMIN 만 허용 (서비스 레이어 일관 검증)
+        checkOwnership(r, findUserByEmail(email));
         return ReservationResponse.from(r);
     }
 

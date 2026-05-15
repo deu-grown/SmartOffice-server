@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grown.smartoffice.domain.accesslog.dto.UserAccessLogListResponse;
 import com.grown.smartoffice.domain.accesslog.service.AccessLogService;
 import com.grown.smartoffice.domain.user.dto.*;
+import com.grown.smartoffice.domain.user.service.UserPreferencesService;
 import com.grown.smartoffice.domain.user.service.UserService;
 import com.grown.smartoffice.global.common.PageResponse;
 import com.grown.smartoffice.support.TestSecurityConfig;
@@ -39,6 +40,7 @@ class UserControllerTest {
 
     @MockitoBean UserService userService;
     @MockitoBean AccessLogService accessLogService;
+    @MockitoBean UserPreferencesService userPreferencesService;
 
     // ── 전체 목록 (ADMIN) ─────────────────────────────────
 
@@ -164,6 +166,48 @@ class UserControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.phone").value("010-1111-2222"));
+    }
+
+    // ── /me/preferences ────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /users/me/preferences — EMPLOYEE 도 허용, JWT subject 로 이메일 전달")
+    @WithMockEmployeeUser(email = "me@grown.com")
+    void getMyPreferences_asEmployee_200() throws Exception {
+        given(userPreferencesService.getMyPreferences("me@grown.com")).willReturn(
+                UserPreferencesResponse.builder()
+                        .userId(7L).notificationsEnabled(true).language("ko").theme("light").build());
+
+        mockMvc.perform(get("/api/v1/users/me/preferences"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.language").value("ko"));
+
+        verify(userPreferencesService).getMyPreferences("me@grown.com");
+    }
+
+    @Test
+    @DisplayName("PUT /users/me/preferences — 부분 수정 요청")
+    @WithMockEmployeeUser(email = "me@grown.com")
+    void updateMyPreferences_ok() throws Exception {
+        given(userPreferencesService.updateMyPreferences(eq("me@grown.com"), any())).willReturn(
+                UserPreferencesResponse.builder()
+                        .userId(7L).notificationsEnabled(false).language("en").theme("dark").build());
+
+        String body = objectMapper.writeValueAsString(Map.of(
+                "notificationsEnabled", false, "language", "en", "theme", "dark"));
+
+        mockMvc.perform(put("/api/v1/users/me/preferences")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.theme").value("dark"));
+    }
+
+    @Test
+    @DisplayName("GET /users/me/preferences — 인증 없음 → 401")
+    void getMyPreferences_noAuth_401() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me/preferences"))
+                .andExpect(status().isUnauthorized());
     }
 
     // ── 개별 (ADMIN) ───────────────────────────────────────

@@ -81,7 +81,7 @@ class ControlControllerTest {
     @WithMockAdminUser
     void getControlDetail_asAdmin_success() throws Exception {
         ControlCommand command = ControlCommand.builder()
-                .commandType("POWER_ON")
+                .commandType(com.grown.smartoffice.domain.control.entity.ControlCommandType.AC)
                 .status(ControlStatus.COMPLETED)
                 .triggeredAt(LocalDateTime.now())
                 .build();

@@ -2,6 +2,7 @@ package com.grown.smartoffice.domain.sensor.repository;
 
 import com.grown.smartoffice.domain.power.dto.HourlyPowerProjection;
 import com.grown.smartoffice.domain.power.dto.MonthlyPowerProjection;
+import com.grown.smartoffice.domain.power.dto.PowerZoneProjection;
 import com.grown.smartoffice.domain.sensor.entity.SensorLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -66,7 +67,7 @@ public interface SensorLogRepository extends JpaRepository<SensorLog, Long> {
               AND sl.sensor_type = 'POWER'
               AND sl.logged_at BETWEEN :start AND :end
               AND (:deviceId IS NULL OR sl.devices_id = :deviceId)
-            GROUP BY DATE_FORMAT(sl.logged_at, '%Y-%m-%d %H'), sl.devices_id, d.device_name
+            GROUP BY DATE_FORMAT(sl.logged_at, '%Y-%m-%dT%H:00:00'), sl.devices_id, d.device_name
             ORDER BY hour_at ASC
             """, nativeQuery = true)
     List<HourlyPowerProjection> findHourlyPowerProjection(
@@ -106,4 +107,16 @@ public interface SensorLogRepository extends JpaRepository<SensorLog, Long> {
     List<MonthlyPowerProjection> findMonthlyKwhAllZones(
             @Param("year") int year,
             @Param("month") int month);
+
+    @Query(value = """
+            SELECT z.zone_id AS zoneId,
+                   z.zone_name AS zoneName,
+                   COUNT(DISTINCT sl.devices_id) AS meterCount
+            FROM zones z
+            JOIN sensor_logs sl ON sl.zone_id = z.zone_id
+            WHERE sl.sensor_type = 'POWER'
+            GROUP BY z.zone_id, z.zone_name
+            ORDER BY z.zone_id
+            """, nativeQuery = true)
+    List<PowerZoneProjection> findPowerZones();
 }

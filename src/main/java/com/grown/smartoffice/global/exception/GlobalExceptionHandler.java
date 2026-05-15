@@ -21,10 +21,11 @@ public class GlobalExceptionHandler {
     /** 비즈니스 예외 */
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
-        log.warn("[CustomException] {} - {}", e.getErrorCode(), e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        log.warn("[CustomException] {} - {}", errorCode, e.getMessage());
         return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(ApiResponse.error(e.getMessage()));
+                .status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.name(), e.getMessage()));
     }
 
     /** @Valid — @RequestBody 검증 실패 (400): 모든 에러 메시지 반환 */
@@ -37,7 +38,8 @@ public class GlobalExceptionHandler {
             message = "입력값이 올바르지 않습니다.";
         }
         log.warn("[Validation] {}", message);
-        return ResponseEntity.badRequest().body(ApiResponse.error(message));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT.name(), message));
     }
 
     /** @Validated — @PathVariable / @RequestParam 검증 실패 (400) */
@@ -48,14 +50,16 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("잘못된 요청 파라미터입니다.");
         log.warn("[ConstraintViolation] {}", message);
-        return ResponseEntity.badRequest().body(ApiResponse.error(message));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT.name(), message));
     }
 
     /** JSON 파싱 오류 (400) */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException e) {
         log.warn("[NotReadable] {}", e.getMessage());
-        return ResponseEntity.badRequest().body(ApiResponse.error("요청 본문을 읽을 수 없습니다."));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT.name(), "요청 본문을 읽을 수 없습니다."));
     }
 
     /**
@@ -66,7 +70,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e) {
         log.warn("[AccessDenied] {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED.getMessage()));
+                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED.name(), ErrorCode.ACCESS_DENIED.getMessage()));
     }
 
     /** 그 외 모든 예외 (500) */
@@ -75,6 +79,7 @@ public class GlobalExceptionHandler {
         log.error("[UnhandledException]", e);
         return ResponseEntity
                 .internalServerError()
-                .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
+                .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.name(),
+                        ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }

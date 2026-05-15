@@ -33,6 +33,17 @@ public class PowerService {
     private final ZoneRepository zoneRepository;
 
     @Transactional(readOnly = true)
+    public List<PowerZoneListResponse> getPowerZones() {
+        return sensorLogRepository.findPowerZones().stream()
+                .map(p -> PowerZoneListResponse.builder()
+                        .zoneId(p.getZoneId())
+                        .zoneName(p.getZoneName())
+                        .meterCount(p.getMeterCount())
+                        .build())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public PowerCurrentResponse getCurrentPower(Long zoneId) {
         Zone zone = zoneRepository.findById(zoneId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ZONE_NOT_FOUND));

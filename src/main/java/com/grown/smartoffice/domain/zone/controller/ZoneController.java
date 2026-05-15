@@ -39,6 +39,13 @@ public class ZoneController {
                 ApiResponse.success("정상 조회되었습니다.", zoneService.getZoneTree()));
     }
 
+    @Operation(summary = "구역 상세 조회 [ADMIN]", description = "단일 구역의 상세 정보를 반환. ZoneListItemResponse 와 동일 6 필드.")
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ZoneListItemResponse>> getZoneDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.success("정상 조회되었습니다.", zoneService.getZoneDetail(id)));
+    }
+
     @Operation(summary = "구역 등록 [ADMIN]")
     @PostMapping
     public ResponseEntity<ApiResponse<ZoneCreateResponse>> createZone(

@@ -60,6 +60,14 @@ public class ZoneServiceImpl implements ZoneService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ZoneListItemResponse getZoneDetail(Long id) {
+        Zone zone = zoneRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.ZONE_NOT_FOUND));
+        return ZoneListItemResponse.from(zone);
+    }
+
+    @Override
     @Transactional
     public ZoneUpdateResponse updateZone(Long id, ZoneUpdateRequest request) {
         Zone zone = zoneRepository.findById(id)

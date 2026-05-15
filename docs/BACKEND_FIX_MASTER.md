@@ -1,60 +1,65 @@
 # 백엔드 수정 마스터플랜
 
-> 작성일: 2026-05-15
-> 상태: 플랜 1 진입 대기 (0단계 read-only 검증 완료)
+> 작성일: 2026-05-15 · 단일 sprint 정책 전환: 2026-05-15
+> 상태: 묶음 1~5 전체 완료 + 단일 PR open (PR #28, 2026-05-15) — 사용자 머지 대기
 > 입력: `BACKEND_SUGGESTIONS.md` #1~#16 + `../SmartOffice-web/docs/PLAN_3_MASTER.md` 9절 잔존 결함 추적표 #1~#10
-> 작업 브랜치: `feature/backend-fixes` (server 레포, main 기반)
-> 머지 정책: branch protection rule 준수 → 처음부터 PR 절차 (각 항목 독립 PR)
-> 다음 단계: 별도 plan mode 세션에서 플랜 1 #7 1-A 진단 진입
+> **단일 sprint / 단일 PR / push 마지막 1회**
+> 작업 브랜치: `feature/backend-fixes` (server 레포, main 기반, long-lived)
+> 머지 정책: 본 sprint 전체 항목을 **단일 PR 1개**로 머지 (branch protection rule 준수, push 는 sprint 종료 시 1회)
+> 다음 단계: PR #28 리뷰·머지 (사용자 진행)
 
 본 문서는 SmartOffice-server 백엔드 수정 작업의 단일 진실 공급원이다. `BACKEND_SUGGESTIONS.md` 와의 책임 분담은 다음과 같다.
 
 - **`BACKEND_SUGGESTIONS.md`** = 프론트 통합 작업에서 누적된 제안의 영구 보존 (출처 세션 · 우선순위 · 근거 기록). 처리 완료 시 본문에 "처리 완료" 표기 추가만 수행.
-- **`BACKEND_FIX_MASTER.md`** (본 문서) = 실제 실행 계획. 플랜 분할 · 작업 순서 · PR 단위 · 진행 트래커 보유.
+- **`BACKEND_FIX_MASTER.md`** (본 문서) = 실제 실행 계획. 단일 sprint 묶음 분할 · 작업 순서 · 진행 트래커 보유.
 
 ---
 
 ## 0. 컨텍스트
 
-`SmartOffice-web` 통합 작업(2026-05-14~15) 종료 후, web 측은 모든 결함에 graceful handling(우회 상수 · `isError` + ErrorBoundary · 사전 검증 가드) 적용 완료하여 시연 동작은 가능하나 다음 3 기능이 영구 차단 상태:
+`SmartOffice-web` 통합 작업(2026-05-14~15) 종료 후, web 측은 모든 결함에 graceful handling(우회 상수 · `isError` + ErrorBoundary · 사전 검증 가드) 적용 완료하여 시연 동작은 가능하나 핵심 기능 일부가 영구 차단 상태이며, 데이터 정합 + 신설 엔드포인트 + 모델 신설 + 후순위 항목 등 누적 제안 16건(#1~#16, #13 완료)이 잔존한다.
 
-| 기능 | 차단 원인 | 결함 ID |
-|------|----------|---------|
-| /dashboard KPI 카드 4종 (현재 출근/오늘 예약/활성 장치/전체 사용자) | `/dashboard/summary` 500 | #7 |
-| /building PowerHourlyChart + /zones G5 ZonePowerTab | `/power/zones/{id}/hourly` 500 | #11 |
-| /zones G5 ZoneInfoTab 수정 모달 | `PUT /zones/{id}` body deserialize 실패 | #13 |
+**본 sprint 의 단일 sprint 전환 결정 (2026-05-15)**:
 
-본 플랜 1 의 목표 = 위 3건의 백엔드 수정. web 측은 검증(curl + 브라우저)만, 코드 수정 권한 없음.
+- 기존 플랜 1~4 분할 + 항목별 PR 구조 폐기
+- **15건 단일 sprint** 로 일괄 처리 (#13 은 이미 PR #27 머지 완료)
+- 단일 브랜치 `feature/backend-fixes` 에 **항목별 커밋 분리** + **단일 PR 1개** + **push 마지막 1회**
+- 묶음(bundle) 단위로 **빌드/테스트 게이트 + BE+FE 로컬 시각 검증 게이트** 통과 후 다음 묶음 진입
 
 ---
 
 ## 1. 우선순위 그룹
 
-- **상**: #7 · #11 · #13 (3건) — 핵심 기능 차단, 시연 영향
+- **상**: #7 · #11 · ~~#13(완료)~~ — 핵심 기능 차단, 시연 영향
 - **중**: #8 · #9 · #10 · #12 · #15 · #16 (6건) — 기능 보조 또는 안전망
-- **저~중**: #14 (1건) — PM 결정 사안 (Vehicle/Reservation 모델 신설)
+- **저~중**: #14 (1건) — Vehicle/ParkingReservation 모델 신설 (옵션 A 채택)
 - **후순위(저)**: #1 · #2 · #3 · #4 · #5 · #6 (6건) — web 통합 전 누적된 제안
 
----
-
-## 2. 플랜 분할
-
-| 플랜 | 그룹 | 항목 | PR 개수 |
-|------|------|------|---------|
-| **1** | 우선순위 상 (단일 플랜, 각각 별도 PR) | #7 dashboard summary 500 / #11 power hourly 500 / #13 zone PUT deserialize | **3** |
-| **2** | 누락 엔드포인트 신설 | #9 GET /power/zones / #10 GET /zones/{id} / #12 control_commands enum 또는 메타 / #15 GET /parking/zones | TBD (2~4) |
-| **3** | 데이터 정합 + 제약 | #8 access_logs ALLOW 마이그레이션 / #16 parking_spots 좌표 UNIQUE + null XOR | TBD (1~2) |
-| **4** | 모델 신설 검토 (PM 결정 사안) | #14 Vehicle/ParkingReservation | TBD |
-
-플랜 2~4 의 상세는 플랜 1 완료 후 별도 plan mode 세션에서 정의한다.
+본 sprint 단일화 결정에 따라 우선순위 그룹은 작업 우선순위(묶음 진행 순서)로만 활용하며, 처리 자체는 잔여 15건 전수 진행한다.
 
 ---
 
-## 3. 플랜 1 상세 — 우선순위 상 3건
+## 2. 단일 sprint 작업 순서 (묶음 5개)
 
-### 3-1. 0단계 read-only 검증 결과 (2026-05-15)
+| 묶음 | 의미 | 항목 | 진입 조건 | 종료 조건 |
+|------|------|------|-----------|-----------|
+| **1** | 시연 차단 해소 | #7 + #11 | 본 sprint 시작 | 빌드/테스트 + 묶음 1 시각 검증 통과 |
+| **2** | 스키마 변경 | #8 (V9) + #16 (V10) | 묶음 1 종료 | 묶음 2 시각 검증 통과 |
+| **3** | 신설 엔드포인트 | #9 + #10 + #12 + #15 | 묶음 2 종료 | 묶음 3 시각 검증 통과 |
+| **4** | 모델 신설 (#14, 옵션 A) | 4-a Vehicle + 4-b ParkingReservation | 묶음 3 종료 | 묶음 4 시각 검증 통과 |
+| **5** | 후순위 | #1 + #2 + #3 + #4 + #5 + #6 | 묶음 4 종료 | 묶음 5 시각 검증 통과 → sprint 종료 |
+
+각 묶음 종료 후 **사용자 BE+FE 로컬 시각 검증 게이트** (4절 프로토콜 참조) 통과 시 다음 묶음 진입. 검증 실패 시 묶음 내 추가 BE 수정 또는 web 결함 발견 시 `SmartOffice-web/SUGGESTIONS.md` append.
+
+---
+
+## 3. 묶음별 상세
+
+### 3-1. 묶음 1 — 시연 차단 해소 (#7 + #11)
 
 #### #7 GET /api/v1/dashboard/summary HTTP 500
+
+**0단계 read-only 검증 결과 (2026-05-15)**:
 
 `DashboardService.java:45-58` 확인:
 
@@ -63,190 +68,260 @@
   - (a) `countByDeviceStatus(String)` — `DeviceRepository.java:19` 시그니처는 String. `Device.deviceStatus` 컬럼 타입이 enum 이면 단순 0 반환이라 무해. **확인 필요**.
   - (b) `countTodayConfirmed(ReservationStatus, LocalDateTime, LocalDateTime)` JPQL 쿼리 결함 가능.
   - (c) Spring Boot 4 / Hibernate 6.x 의 다른 쿼리 결함.
-- **사용자 결정 2026-05-15**: 본문 추정(NPE) 유지 + 1-A(진단) → 1-B(수정) 2단계로 분리. 실제 진단은 별도 세션.
+
+**처리 절차**: 1-A(진단) → 1-B(수정) 2단계 (동일 묶음 내 연속 처리).
+
+- **1-A 진단**: `./gradlew bootRun` 기동 → admin 토큰 발급 → `curl -i .../dashboard/summary` → 콘솔 스택트레이스 확인 → 결함 메서드 식별
+- **1-B 수정**: 결함 메서드 fix + `DashboardService.getSummary` 4 필드 정규화 + `DashboardServiceTest` 데이터 없음 케이스 단위 테스트 추가
+- **커밋**: `fix(dashboard): GET /dashboard/summary 500 오류 해결` — 1-A 진단 결과를 커밋 본문 첫 줄에 명시
 
 #### #11 GET /api/v1/power/zones/{zoneId}/hourly HTTP 500
+
+**0단계 read-only 검증 결과 (2026-05-15)**:
 
 `PowerService.java:44-75` + `SensorLogRepository.java:55-76` + `HourlyPowerProjection.java` 확인:
 
 - Native query alias snake_case: `id` · `device_id` · `device_name` · `hour_at` · `kwh` · `avg_watt` · `peak_watt`
 - Projection getter camelCase: `getId()` · `getDeviceId()` · `getDeviceName()` · `getHourAt()` · `getKwh()` · `getAvgWatt()` · `getPeakWatt()`
 - **가설 1 (유력)**: Spring Boot 4 / Hibernate 6.x 의 nativeQuery + interface projection 매핑에서 snake_case alias → camelCase getter 자동 변환 미작동. `@Value("#{target.device_id}")` 명시 또는 alias 를 camelCase 로 변경 필요.
-- 가설 2: `LocalDateTime.parse(p.getHourAt(), fmt)` — `DATE_FORMAT` 결과가 `'%Y-%m-%dT%H:00:00'` 패턴 → 서비스 `"yyyy-MM-dd'T'HH:mm:ss"` 와 일치. 가설 1 통과 시 무해.
+- 가설 2: `LocalDateTime.parse(p.getHourAt(), fmt)` 의 `DateTimeParseException` (가설 1 통과 시).
 - `/billing` 엔드포인트는 entity 기반 응답이라 정상 작동 — 정합.
-- **사용자 결정 2026-05-15**: #7 과 동일하게 1-A(진단) → 1-B(수정) 2단계 분리.
 
-#### #13 PUT /api/v1/zones/{id} body deserialize 결함
+**처리 절차**: 1-A(진단) → 1-B(수정) 2단계.
 
-`ZoneUpdateRequest.java` + `ZoneCreateRequest.java` 확인:
+- **1-A 진단**: `curl -i .../power/zones/5/hourly` → 콘솔 스택트레이스 → 가설 1/2/3 식별
+- **1-B 수정** (가설 1 채택 시 예상): `SensorLogRepository.findHourlyPowerProjection` alias 정정 또는 `HourlyPowerProjection` getter 에 `@Value("#{target.device_id}")` 명시 + `PowerServiceIntegrationTest` 신규 추가 (V8 시드 기반)
+- **커밋**: `fix(power): GET /power/zones/{id}/hourly 500 오류 해결`
 
-- 둘 다 `@Getter` + `@NoArgsConstructor`. Setter 부재. `@JsonCreator`/`@JsonProperty` 부재.
-- **결정적 차이**: `ZoneUpdateRequest` 에만 `private boolean clearParent` (primitive). `ZoneCreateRequest` 는 primitive boolean 필드 없음.
-- Lombok `@Getter` 가 `isClearParent()` 생성 → Jackson property "clearParent" 추론. setter 부재 시 read-only property 로 간주되어 unknown property 또는 mapping 예외 가능.
-- **사용자 결정 2026-05-15**: 옵션 (A) 채택 — `Boolean` wrapper + `@Setter` 추가. 본 세션 가설 정확 일치로 1-A 진단 단계 불필요, 즉시 수정 가능.
+#### 묶음 1 시각 검증 동선
 
-### 3-2. #7 dashboard/summary 500 — 1-A 진단 → 1-B 수정 (2단계)
+- BE: `./gradlew bootRun --args='--spring.profiles.active=local'`
+- FE: `SmartOffice-web` `npm run dev` → `http://localhost:5173`
+- 검증 항목:
+  - `/dashboard` KPI 카드 4종 (현재 출근 / 오늘 예약 / 활성 장치 / 전체 사용자) 복원
+  - `/building` PowerHourlyChart + `/zones` G5 ZonePowerTab 복원
+- 통과 시 `PLAN_3_MASTER.md` 9절 #1 + #5 마감 표기 (`feature/backend-fixes` 위 docs 커밋)
 
-**1-A 진단** (별도 plan mode 세션에서 진행):
+### 3-2. 묶음 2 — 스키마 변경 (#8 + #16)
 
-1. `./gradlew bootRun --args='--spring.profiles.active=local'` 기동 (로컬, 8080)
-2. admin@grown.com 토큰 발급 → `curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/dashboard/summary`
-3. 콘솔 스택트레이스 1차 확인. 결함 메서드 식별:
-   - `userRepository.countByStatus(UserStatus.ACTIVE)` 단독 호출 검증
-   - `deviceRepository.countByDeviceStatus("ACTIVE")` 단독 호출 검증 (Device.deviceStatus 컬럼 타입 enum vs String 확인)
-   - `reservationRepository.countTodayConfirmed(...)` JPQL 검증
-4. 결함 메서드 확정 후 본 문서의 1-B 수정 항목 구체화
+#### #8 access_logs.auth_result V9 마이그레이션 (ALLOW → APPROVED)
 
-**1-B 수정** (1-A 결과 기반):
+- **마이그레이션 파일**: `V9__migrate_allow_to_approved.sql`
+  ```sql
+  UPDATE access_logs SET auth_result = 'APPROVED' WHERE auth_result = 'ALLOW';
+  ```
+- **검증**: 마이그레이션 후 `SELECT DISTINCT auth_result FROM access_logs` → `APPROVED / DENIED / BLOCKED` 만 반환
+- **커밋**: `chore(migration): V9 access_logs ALLOW → APPROVED 통일`
 
-- 결함 메서드의 NPE/JPQL/시그니처 결함 fix
-- `DashboardService.getSummary` 의 4 필드 정규화 (모두 정수 0 이상 보장)
-- `DashboardServiceTest` 데이터 없음 케이스 단위 테스트 추가
+#### #16 parking_spots 좌표 UNIQUE + null XOR 가드 (V10)
 
-**파일 (1-B 단계 예상)**:
+- **마이그레이션 파일**: `V10__parking_spots_unique_position.sql`
+  ```sql
+  ALTER TABLE parking_spots
+    ADD CONSTRAINT UQ_PARKING_SPOTS_POSITION UNIQUE (zone_id, position_x, position_y);
+  ```
+- **Service 충돌 검증** (`ParkingServiceImpl`):
+  - `createSpot`: 좌표 둘 다 not null 시 `existsByZone_ZoneIdAndPositionXAndPositionY(zoneId, x, y)` → 충돌 시 `ErrorCode.DUPLICATE_SPOT_POSITION`
+  - `updateSpot`: 자기 자신 제외 검증
+- **null XOR 가드**: `ParkingSpotCreateRequest` / `UpdateRequest` 에 bean validation custom annotation 또는 service 진입 직후 `(positionX == null) != (positionY == null)` 차단 → `ErrorCode.INVALID_POSITION_PAIR`
+- **커밋**: `feat(parking): #16 좌표 UNIQUE 제약 + null XOR 가드 (V10)`
 
-- `domain/dashboard/service/DashboardService.java` (수정)
-- `domain/dashboard/service/DashboardServiceTest.java` (신규 또는 보강)
-- 결함 메서드의 repository 또는 JPQL 정정 (1-A 결과 따라 결정)
+#### 묶음 2 시각 검증 동선
 
-**PR**: `fix(dashboard): GET /dashboard/summary 500 오류 해결` — 1-A 진단 결과를 PR 본문 첫 줄에 명시
+- `/access-logs` 페이지에서 `authResult` 필터 `APPROVED` 표기 일관성 확인 (V8 시드 기반 ALLOW 잔존 해소)
+- `/parking-spots` 등록/수정 핸들러에서 같은 zone 동일 좌표 spot 등록 시도 → 백엔드 4xx + 토스트 노출
 
-### 3-3. #11 power hourly 500 — 1-A 진단 → 1-B 수정 (2단계)
+### 3-3. 묶음 3 — 신설 엔드포인트 (#9 + #10 + #12 + #15)
 
-**1-A 진단** (별도 plan mode 세션에서 진행):
+#### #9 GET /api/v1/power/zones
 
-1. `./gradlew bootRun --args='--spring.profiles.active=local'` 기동
-2. admin@grown.com 토큰 발급 → `curl -i -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/power/zones/5/hourly"` (V8 시드 POWER zone 4건 중 zone 5)
-3. 콘솔 스택트레이스 1차 확인. 결함 식별:
-   - 가설 1 검증: nativeQuery + interface projection 의 snake_case alias 매핑 실패 (`IllegalArgumentException` 또는 `MappingException` 예상)
-   - 가설 2 검증: `LocalDateTime.parse(p.getHourAt(), fmt)` 의 `DateTimeParseException` (가설 1 통과 시)
-   - 가설 3 검증: native query 자체 실패 (SQL syntax / column not found 등)
-4. 결함 위치 확정 후 본 문서의 1-B 수정 항목 구체화
+- POWER 미터 보유 zone 집계 (`sensor_logs.sensor_type='POWER'` distinct)
+- 응답: `[{ "zoneId", "zoneName", "meterCount" }]`
+- 권한: `@PreAuthorize("hasRole('ADMIN')")`
+- **커밋**: `feat(power): #9 GET /power/zones 신설`
 
-**1-B 수정** (1-A 결과 기반):
+#### #10 GET /api/v1/zones/{id}
 
-가설 1 채택 시 예상 수정:
+- `ZoneController` 에 GET /{id} 추가
+- `ZoneListItemResponse` 재사용 또는 `ZoneDetailResponse` 신설 (`childCount` · `deviceCount` · `activeReservationCount` 등 detail 전용 집계)
+- `ZoneService.getZoneDetail(Long id)` 도입, 부재 시 `CustomException(ZONE_NOT_FOUND)`
+- **커밋**: `feat(zone): #10 GET /zones/{id} 신설`
 
-- `SensorLogRepository.findHourlyPowerProjection` 의 alias 를 camelCase 로 정정 (`devices_id AS deviceId` 등)
-- 또는 `HourlyPowerProjection` getter 에 `@Value("#{target.device_id}")` 명시 (정합 유지 옵션)
-- 통합 테스트 `PowerServiceIntegrationTest.getHourlyHistory_returnsResponse_whenPowerLogsExist` 신규 추가 (V8 시드 기반 POWER zone 4건)
+#### #12 ControlCommandType enum 정합
 
-**파일 (1-B 단계 예상, 가설 1 채택 시)**:
+- 옵션 (A) 채택: `ControlCommandType` enum 정의 (`AC | LIGHT | FAN | DOOR_LOCK | SET_TEMPERATURE`)
+- `ControlCommand.commandType` 컬럼 `@Enumerated(EnumType.STRING)` (또는 string 유지하되 service 진입 시 enum 변환 + `INVALID_COMMAND_TYPE`)
+- `ControlRequest.command` enum 타입 또는 service 검증
+- **커밋**: `feat(control): #12 ControlCommandType enum 정합`
 
-- `domain/sensor/repository/SensorLogRepository.java` (수정)
-- `domain/power/service/PowerServiceTest.java` 또는 `PowerControllerTest.java` (신규/보강)
+#### #15 GET /api/v1/parking/zones
 
-**PR**: `fix(power): GET /power/zones/{id}/hourly 500 오류 해결` — 1-A 진단 결과를 PR 본문 첫 줄에 명시
+- 주차면 1건 이상 보유 zone 집계
+- 응답: `[{ "zoneId", "zoneName", "zoneType", "totalSpots", "occupiedSpots" }]`
+- 권한: ADMIN
+- **커밋**: `feat(parking): #15 GET /parking/zones 신설`
 
-### 3-4. #13 zone PUT body deserialize 결함 (1단계, 즉시 수정 가능)
+#### 묶음 3 시각 검증 동선
 
-**근거**: 0단계 가설 정확 일치. `ZoneUpdateRequest.clearParent` primitive boolean + setter 부재.
+- `/zones` 상세 화면 (G5) 에서 백엔드 GET /zones/{id} 호출 정합
+- `/power` 위젯에서 `usePowerZones()` 동작 확인 (web 측 `POWER_ZONES_TEMP` 우회 후속 정리는 본 sprint 외 web 작업)
+- `/control` 명령 발송 시 잘못된 enum 값 거부 확인
+- `/parking` 페이지 zone 필터에서 주차면 보유 zone 만 노출 확인
 
-**옵션 (A) 채택** (사용자 결정 2026-05-15):
+### 3-4. 묶음 4 — #14 모델 신설 (옵션 A)
 
-```java
-@Getter
-@Setter
-@NoArgsConstructor
-public class ZoneUpdateRequest {
-    ...
-    private Boolean clearParent;  // primitive → wrapper
-}
-```
+**사용자 결정 (2026-05-15)**: 옵션 A — Vehicle 엔티티 신설 + ParkingReservation 분리.
 
-+ `ZoneServiceImpl.updateZone` 내부 `request.getClearParent()` 사용 시 `Boolean.TRUE.equals(...)` null safe 처리
+단일 PR 정책은 유지하되, 묶음 4 내부를 2개 sub-bundle 로 분리하여 빌드/테스트/시각 검증 단위 명확화.
 
-**대안 (B) 미채택**: `@Builder` + `@AllArgsConstructor` + `@Jacksonized` 로 record-like 불변 DTO 재설계 — 변경 폭이 커서 회귀 위험 ↑
+#### 4-a Vehicle 엔티티
 
-**파일**:
+- **테이블**: `vehicle` (Flyway V11)
+  - `id` · `plate_number` (UNIQUE) · `owner_name` · `owner_user_id?` (FK users) · `type` enum [`STAFF` | `VISITOR`] · `purpose?` · `created_at`
+- **컴포넌트**:
+  - Entity `Vehicle`
+  - Repository `VehicleRepository`
+  - Service `VehicleService` / `VehicleServiceImpl`
+  - Controller `VehicleController` (CRUD 5종)
+  - DTO `VehicleCreateRequest` / `VehicleUpdateRequest` / `VehicleResponse`
+- **단위 테스트**: `VehicleControllerTest` + `VehicleServiceTest` (CRUD + 권한)
+- **빌드/테스트 통과 게이트**: `./gradlew build && ./gradlew test`
+- **시연 동선** (4-a 단독): VehicleController curl CRUD (web 측 미구현 가능성 큼)
+- **커밋**: `feat(vehicle): #14 Vehicle 엔티티 + CRUD (V11)`
 
-- `domain/zone/dto/ZoneUpdateRequest.java` (수정 — `@Setter` 추가 + `clearParent` Boolean wrapper)
-- `domain/zone/service/ZoneServiceImpl.java` (수정 — `getClearParent()` null safe 처리)
-- `domain/zone/controller/ZoneControllerTest.java` (신규 또는 보강) — PUT body 4 변형:
-  1. `{"name": "x"}` (name 만)
-  2. `{"parentId": 1}` (parentId 만)
-  3. `{"clearParent": true}` (clearParent true)
-  4. `{"name":"x","zoneType":"ROOM","parentId":null,"clearParent":true,"description":"y"}` (전체)
-  - 모두 200 응답 + DB 반영 확인
+#### 4-b ParkingReservation 엔티티
 
-**참고**: `ZoneCreateRequest` 도 setter 부재라 동일하게 fields-based deserialize 에 의존하지만, primitive boolean 필드가 없어 통과 중. 본 수정에서 함께 `@Setter` 추가는 권장 X (POST 정상 동작 영향 가능). ZoneUpdateRequest 만 수정 범위.
+- **테이블**: `parking_reservation` (Flyway V11 추가 — V11 1개 마이그레이션에 vehicle + parking_reservation 두 테이블 함께 정의 또는 V11 vehicle / V12 parking_reservation 로 분리. 단일 V11 권장)
+  - `id` · `vehicle_id` (FK vehicle) · `zone_id` (FK zones) · `spot_id?` (FK parking_spots) · `reserved_at` · `entry_at?` · `exit_at?` · `status` enum [`RESERVED` | `PARKED` | `EXITED`]
+- **컴포넌트**:
+  - Entity `ParkingReservation`
+  - Repository `ParkingReservationRepository`
+  - Service `ParkingReservationService` / `ParkingReservationServiceImpl`
+  - Controller `ParkingReservationController` (CRUD 5종)
+  - DTO 풀셋
+- **단위 테스트**: `ParkingReservationControllerTest` + `ParkingReservationServiceTest`
+- **빌드/테스트 통과 게이트**
+- **시연 동선** (4-b 단독): 4-a Vehicle 생성 → ParkingReservation 연결 curl 흐름
+- **커밋**: `feat(parking): #14 ParkingReservation 엔티티 + CRUD (V11)`
 
-**PR**: `fix(zone): PUT /zones/{id} body deserialize 결함 해결 (clearParent Boolean wrapper)`
+#### 묶음 4 시각 검증 동선 (4-b 종료 시 통합)
 
-### 3-5. 게이트 (각 PR 머지 직전)
+- `/parking` 차량/예약 신규 화면 (web 측 미구현 시 SmartOffice-web/SUGGESTIONS.md append)
+- BE 단독 검증: Vehicle + ParkingReservation curl CRUD + 연결 흐름 정상
 
-- `./gradlew build` 통과
-- `./gradlew test` 통과 (신규 테스트 포함)
-- 회귀 방지: 본 PR 의 controller 테스트 + 기존 통합 테스트 0건 실패
-- 커밋 메시지에 `Co-Authored-By: Claude` / `🤖 Generated with` 푸터 0건 (전역 규칙 정합)
-- 커밋 컨벤션: `fix(domain): ...` (Conventional Commits)
+### 3-5. 묶음 5 — 후순위 (#1 + #2 + #3 + #4 + #5 + #6)
 
-### 3-6. web 잔존 게이트 마감 (백엔드 수정 후 검증)
+#### 항목별 시연 동선 / 시연 불가 시 처리
 
-본 플랜 1 PR 3건 머지 후, web 측 재호출 검증을 별도 세션에서 수행 (단, web 수정 권한 없음 — 검증만):
+| # | 항목 | 시연 동선 | 시연 불가 시 |
+|---|------|----------|------------|
+| #1 | guest 도메인 | web 미구현 — 시연 불가 | BE 빌드/테스트 + curl 검증만으로 게이트 통과. SmartOffice-web/SUGGESTIONS.md append (web 측 guest UI) |
+| #2 | Refresh Token httpOnly 쿠키 | web `/login` → 로그인 → 토큰 갱신 흐름 (web 영향 큼) | web 코드 미수정 정책상 cookie 동작 검증 어려움 — curl `Set-Cookie` 헤더 검증으로 대체 + SmartOffice-web/SUGGESTIONS.md append |
+| #3 | user_preferences | web 미구현 — 시연 불가 | BE 빌드/테스트 + curl 검증. SmartOffice-web/SUGGESTIONS.md append |
+| #4 | OpenAPI 보강 | `http://localhost:8080/swagger-ui` 진입 + 신규 스키마 확인 | 시연 가능 (web 무관) |
+| #5 | errorCode 필드 | curl 4xx 응답 `errorCode` 필드 확인 | 시연 가능 (web 무관) |
+| #6 | reservation 권한 분기 | web `/meeting-rooms` ADMIN/USER 권한별 동작 (web 영향 가능) | curl 권한별 응답 검증 + SmartOffice-web/SUGGESTIONS.md append (web UX 영향 시) |
 
-| # | 백엔드 수정 | web 재검증 | 추적표 마감 |
-|---|------------|-----------|------------|
-| 1 | #7 dashboard summary 500 → 200 | /dashboard KPI 4종 복원 (curl + 브라우저) | `PLAN_3_MASTER.md` 9절 #1 "마감 (백엔드 fix `<SHA>`)" |
-| 5 | #11 power hourly 500 → 200 | /building PowerHourlyChart 복원 + /zones G5 ZonePowerTab 복원 | 9절 #5 "마감 (백엔드 fix `<SHA>`)" |
-| 7 | #13 zone PUT 500 → 200 | /zones G5 ZoneInfoTab 수정 모달 저장 성공 | 9절 #7 "마감 (백엔드 fix `<SHA>`, Fix 7 부분)" |
+#### #2 처리 방식 (재확인)
 
-**web SUGGESTIONS append (수정 권한 외 — 안내만)**:
+- **BE 코드 수정 포함**: `SecurityConfig` (CORS allow-credentials, exposed/allowed headers, SameSite), `AuthController.login` 응답 `Set-Cookie` 발급, `AuthController.refresh` 쿠키 read
+- **web 동반 변경은 SmartOffice-web/SUGGESTIONS.md append 만** (web 코드 직접 수정 금지). append 항목:
+  - `axios` `withCredentials: true` 활성화 (`src/lib/api/client.ts`)
+  - `tokenStorage.refreshToken` 관련 함수 제거
+  - 운영 도메인 통일 시 `Domain` 속성 정합
 
-- web `SUGGESTIONS.md` 신설 또는 BACKEND_SUGGESTIONS 패턴 차용 — 신설 시 사용자 명시적 허락 필요
-- 백엔드 sprint 종료 시점에 안내 항목 작성:
-  - `features/power/constants.ts` 의 `POWER_ZONES_TEMP` 제거 권장 (백엔드 #9 채택 시)
-  - `features/zone/hooks.ts:useZoneDetail` 의 `find(id)` 우회 제거 권장 (백엔드 #10 채택 시)
-  - `features/accesslog/types.ts` 의 `"ALLOW"` 호환 제거 권장 (백엔드 #8 V9 마이그레이션 후)
-  - `ParkingManagement` 의 `useParkingSpots({})` distinct 우회 제거 권장 (백엔드 #15 채택 시)
-  - `ParkingSpotsTable` 의 `validateCoordinates()` 사전 검증 제거 권장 (백엔드 #16 채택 시)
+#### 묶음 5 커밋 분리
+
+각 항목별 1 커밋:
+
+- `feat(guest): #1 guest 도메인 신설`
+- `feat(auth): #2 Refresh Token httpOnly 쿠키 전환`
+- `feat(user): #3 user_preferences API 신설`
+- `chore(openapi): #4 응답 schema 보강`
+- `feat(error): #5 errorCode 필드 추가`
+- `refactor(reservation): #6 권한 분기 일관성 정리`
 
 ---
 
-## 4. 플랜 2~4 골격 (TBD)
+## 4. 묶음 단위 시각 검증 프로토콜
 
-### 플랜 2 (누락 엔드포인트 신설)
+### 묶음 종료 조건
 
-- **#9 GET /api/v1/power/zones** — `sensor_logs.sensor_type='POWER'` distinct zone 집계. 응답에 `zoneId` · `zoneName` · `meterCount` (또는 향후 `totalSpots` 패턴과 정합 위해 보강).
-- **#10 GET /api/v1/zones/{id}** — `ZoneListItemResponse` 재사용 또는 `ZoneDetailResponse` 신설 (`childCount` · `deviceCount` · `activeReservationCount` 등 detail 전용 집계).
-- **#12 ControlCommandType enum 또는 GET /api/v1/controls/commands 메타** — (A) enum 정의 + 검증, 또는 (B) 메타 엔드포인트. 또는 (A) + (B) 조합.
-- **#15 GET /api/v1/parking/zones** — `parking_spots` 보유 zone + `totalSpots`/`occupiedSpots` 포함.
+- 묶음 내 모든 BE 항목의 빌드/테스트 통과 (`./gradlew build && ./gradlew test`)
+- 회귀 방지: 본 묶음의 controller 테스트 + 기존 통합 테스트 0건 실패
+- 커밋 컨벤션: `fix(domain): ...` / `feat(domain): ...` / `chore(...)` (Conventional Commits)
+- 커밋 푸터에 `Co-Authored-By: Claude` / `🤖 Generated with` 0건
 
-### 플랜 3 (데이터 정합 + 제약)
+### 묶음 보고 (사용자 시각 검증 진입 전)
 
-- **#8 V9__migrate_allow_to_approved.sql Flyway 마이그레이션** — `UPDATE access_logs SET auth_result = 'APPROVED' WHERE auth_result = 'ALLOW';` 1회 실행. 향후 enum 컬럼화 검토.
-- **#16 parking_spots (zone_id, position_x, position_y) UNIQUE + null XOR 가드** — V9 또는 V10 마이그레이션 + `ParkingServiceImpl` Service 충돌 검증 + DTO null XOR validation.
+- 변경 파일 목록 + 신규 엔드포인트 + Flyway 마이그레이션 + 회귀 테스트 결과 요약
 
-### 플랜 4 (모델 신설 검토, PM 결정 후)
+### 사용자 시각 검증 절차
 
-- **#14 Vehicle + ParkingReservation 또는 AccessLog 통합 또는 외부 ALPR** — 옵션 결정 선행. PM 결정 사안.
+- BE: `./gradlew bootRun --args='--spring.profiles.active=local'`
+- FE: `SmartOffice-web` 에서 `npm run dev` → `http://localhost:5173`
+- 묶음별 시연 동선은 3절 묶음 상세의 "시각 검증 동선" 참조
 
-### 후순위 (필요 시 별도 sprint)
+### 시연 불가 게이트 정책
 
-- #1 guest 도메인 / #2 Refresh Token httpOnly 쿠키 / #3 user_preferences / #4 OpenAPI 보강 / #5 errorCode 필드 / #6 reservation 권한 분기
+시연 동선이 web 측 미구현으로 검증 불가한 경우, BE 빌드/테스트 + curl 검증 통과를 게이트 통과로 인정. web 측 영향 항목은 `SmartOffice-web/SUGGESTIONS.md` append 의무.
+
+### 검증 결과 처리
+
+- **통과**: 6절 트래커에 "검증 통과 (YYYY-MM-DD)" 표기 후 다음 묶음 진입
+- **결함 발견**:
+  - BE 결함: 묶음 내 추가 BE 수정 → 재검증
+  - web 결함: `SmartOffice-web/SUGGESTIONS.md` append 후 다음 묶음 진입 (web 코드 미수정)
 
 ---
 
-## 5. 검증 / 머지 정책
+## 5. 머지 정책 (단일 PR)
 
-- 각 PR 단독 머지 (squash X — 본 fix 들은 분리 의미)
-- branch protection rule 정합: server origin/main 직접 push 금지 → 본 작업 전체 PR 절차
-- web 수정 권한 외 — 발견 시 SUGGESTIONS append 사용자 허락 후
-- `./gradlew build` + `./gradlew test` 통과 후 PR open
+- 본 sprint 잔여 15건 전체를 **단일 PR 1개** 로 머지
+- 단일 브랜치 `feature/backend-fixes` 위에 항목별 커밋 분리 (트레이서빌리티 보존)
+- **push 마지막 1회**: 묶음 1~5 모두 종료 + 모든 시각 검증 통과 후 단일 push
+- branch protection rule (server origin/main PR 필수) 정합 — 단일 PR 통과로 마감
+- PR 본문에 본 마스터플랜 6절 트래커 + `SmartOffice-web/SUGGESTIONS.md` append 항목 정리 포함
+
+### web/SUGGESTIONS.md append 항목 정리 (sprint 종료 시점 PR 본문에 포함)
+
+본 sprint 진행 중 발견되어 SmartOffice-web/SUGGESTIONS.md 에 append 한 항목을 PR 본문에 표 형식으로 정리한다 (web 후속 작업 입력으로 활용). 예상 카테고리:
+
+- 묶음 3 종료 후: `POWER_ZONES_TEMP` 제거 권장 (#9 채택), `useZoneDetail` find 우회 제거 권장 (#10 채택), `useParkingSpots({})` distinct 우회 제거 권장 (#15 채택)
+- 묶음 2 종료 후: `accesslog/types.ts` `"ALLOW"` 호환 제거 권장 (#8 V9 후), `ParkingSpotsTable` 사전 검증 제거 권장 (#16 V10 후)
+- 묶음 4 종료 후: ParkingManagement 차량/예약 UI 신설 권장 (#14 채택)
+- 묶음 5 종료 후: #2 / #6 web 영향 항목
 
 ---
 
 ## 6. 진행 트래커
 
-| 플랜 | 항목 | 상태 | PR | 시작 | 완료 | 비고 |
-|------|------|------|----|----|------|------|
-| 마스터플랜 작성 | — | 완료 | — | 2026-05-15 | 2026-05-15 | 본 문서 |
-| 1 | #7 dashboard summary 500 (1-A) | 대기 | — | — | — | 별도 plan mode 세션 |
-| 1 | #7 (1-B) | 대기 | — | — | — | 1-A 완료 후 |
-| 1 | #11 power hourly 500 (1-A) | 대기 | — | — | — | 별도 plan mode 세션 |
-| 1 | #11 (1-B) | 대기 | — | — | — | 1-A 완료 후 |
-| 1 | #13 zone PUT deserialize | 대기 | — | — | — | 즉시 수정 가능 (옵션 A) |
-| 2~4 | — | TBD | — | — | — | 플랜 1 완료 후 정의 |
+| 묶음 | 항목 | 상태 | 커밋 SHA | 시작 | 완료 | 시각 검증 | 비고 |
+|------|------|------|----------|------|------|-----------|------|
+| 마스터플랜 | 단일 sprint 정책 전환 | 완료 | (본 docs 커밋) | 2026-05-15 | 2026-05-15 | — | 본 문서 |
+| — | #13 zone PUT deserialize | 완료 | `a32d146` (PR #27) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | sprint 단일화 전 별도 PR 머지 완료. 옵션 A + Zone.update() partial update null 가드 동봉 |
+| 1 | #7 dashboard summary 500 | 완료 | `d96e77d` (fix) + `5edb416` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `DeviceRepository.countByDeviceStatus` 시그니처 String → DeviceStatus enum (Hibernate 7.2.7 type mismatch 가 진짜 원인). 데이터 없음 케이스 단위 테스트 추가 |
+| 1 | #11 power hourly 500 | 완료 | `bfe28be` (fix) + `4a8d744` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `findHourlyPowerProjection` GROUP BY DATE_FORMAT 패턴 SELECT 와 통일 (only_full_group_by 가 진짜 원인, 마스터플랜 가설 1 projection 매핑은 무관). PowerServiceIntegrationTest 신설 |
+| 1 | 묶음 1 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | /dashboard KPI 4종 (현재 출근 0/10·오늘 예약 5·활성 장치 18·전체 사용자 10) + /building 시간별 전력 + /zones 전력 탭 복원 |
+| 2 | #8 V9 ALLOW→APPROVED | 완료 | `55a6c37` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | curl: ALLOW 0건 / APPROVED 61건 (이전 53+8). web 측 ALLOW literal 호환 제거 권장 SUGGESTIONS append |
+| 2 | #16 parking_spots V10 UNIQUE + null XOR | 완료 | `7975c49` (fix) + `3101713` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | UNIQUE 제약 + Service validatePosition (null XOR + 좌표 충돌) + ErrorCode 2건. curl: 동일 좌표 409 + null XOR 400 |
+| 2 | 묶음 2 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 검증 통과 (#8 ALLOW→APPROVED 정합 + #16 좌표 충돌 차단 정합). web 측 결함 발견(Select 영어 표시값 + ALLOW 옵션 잔존) → web/SUGGESTIONS.md #2 append |
+| 3 | #9 GET /power/zones | 완료 | `6445b64` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | POWER 미터 보유 zone 집계 + meterCount. curl zone 4건 |
+| 3 | #10 GET /zones/{id} | 완료 | `154636a` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ZoneListItemResponse 재사용. curl 6 필드 정합 |
+| 3 | #12 ControlCommandType enum | 완료 | `4af6d36` (fix) + `ec58654` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | enum 5종 + INVALID_COMMAND_TYPE. curl POWER_ON 400 거부 |
+| 3 | #15 GET /parking/zones | 완료 | `513732c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 주차면 보유 zone + totalSpots/occupiedSpots. curl zone 2건 |
+| 3 | 묶음 3 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 4건 통과 + web 5개 페이지 회귀 0건. 신설 EP web 채택은 후속 (web/SUGGESTIONS.md #3) |
+| 4 | 4-a Vehicle 엔티티 (V11) | 완료 | `848ff31` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 옵션 A. Vehicle 엔티티 + CRUD 5 + VehicleType enum. 단위/통합 테스트 8 |
+| 4 | 4-b ParkingReservation 엔티티 (V12) | 완료 | `b7d9809` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ParkingReservation 엔티티 + CRUD 5 + 상태 RESERVED/PARKED/EXITED. 단위/통합 테스트 7. V11(vehicle)/V12(parking_reservation) 분리 |
+| 4 | 묶음 4 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE curl 통합 흐름 (Vehicle 생성 → Reservation 연결 → 입차 PARKED → DELETE 정리) 통과. web 미구현 → SUGGESTIONS #4 append |
+| 5 | #1 guest 도메인 | 완료 | `d957e29` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | guests V13 + GuestStatus 4종 + CRUD 5 + check-in/out. ErrorCode 3종. curl 전수 검증 (체크인 재호출 400 포함) |
+| 5 | #2 Refresh Token httpOnly | 완료 | `fbc2b1b` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | RefreshTokenCookieProvider + CORS allowCredentials. refresh 쿠키 우선·body 폴백 (web 미수정 호환). curl Set-Cookie(HttpOnly·SameSite=Lax) + 쿠키 refresh 검증 |
+| 5 | #3 user_preferences | 완료 | `bee8336` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | user_preferences V14 + GET/PUT /users/me/preferences. lazy 기본값 생성. curl 검증 |
+| 5 | #4 OpenAPI 보강 | 완료 | `25a70a5` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 대시보드 DTO 4종 @Schema (description+example). /v3/api-docs 노출 확인 |
+| 5 | #5 errorCode 필드 | 완료 | `e500388` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | ApiResponse.errorCode (정상 응답 직렬화 제외) + 전 핸들러 ErrorCode.name() 전파. curl 4xx errorCode 필드 확인 |
+| 5 | #6 reservation 권한 분기 | 완료 | `b6e282c` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | getReservation 본인/ADMIN 검증 추가 (수정·취소와 동일 패턴) + 레이어 분담 문서화. curl ADMIN 200 / 404 검증 |
+| 5 | 묶음 5 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | 시연 불가 게이트 — BE 빌드/테스트(406 통과) + curl 전수 검증. web 후속: SUGGESTIONS #5(guest UI)·#6(refresh 쿠키 web 변경)·#7(preferences UI) append |
+| 마지막 | 단일 PR open + push | 완료 | — | 2026-05-15 | 2026-05-15 | — | [PR #28](https://github.com/deu-grown/SmartOffice-server/pull/28) open (feature/backend-fixes → main, 28 커밋). 머지는 사용자 진행 |
 
 ---
 
@@ -254,5 +329,6 @@ public class ZoneUpdateRequest {
 
 - `BACKEND_SUGGESTIONS.md` — 누적 제안 16건 (#1~#16, 영구 보존)
 - `../SmartOffice-web/docs/PLAN_3_MASTER.md` — web 통합 작업 마스터플랜 + 9절 잔존 결함 추적표
-- `CLAUDE.md` · `AGENTS.md` — 백엔드 컨벤션
+- `../SmartOffice-web/SUGGESTIONS.md` — web 측 누적 제안 (본 sprint 진행 중 append 추가)
+- `CLAUDE.md` · `AGENTS.md` · `GEMINI.md` — 백엔드 컨벤션 (3종 동일 동기화)
 - `docs/erd.sql` · `docs/requirements.md` · `docs/mqtt-prod-deploy.md` — 도메인 스펙

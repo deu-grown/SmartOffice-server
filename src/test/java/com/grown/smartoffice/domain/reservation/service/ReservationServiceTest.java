@@ -126,6 +126,64 @@ class ReservationServiceTest {
     }
 
     @Test
+    @DisplayName("예약 상세 조회 — 본인 예약 성공")
+    void getReservation_owner_success() {
+        Reservation reservation = Reservation.builder()
+                .user(user).zone(zone)
+                .reservationsTitle("팀 미팅")
+                .startAt(LocalDateTime.now().plusHours(1))
+                .endAt(LocalDateTime.now().plusHours(3))
+                .build();
+        ReflectionTestUtils.setField(reservation, "reservationsId", 50L);
+
+        given(reservationRepository.findByIdWithDetails(50L)).willReturn(Optional.of(reservation));
+        given(userRepository.findByEmployeeEmail("test@test.com")).willReturn(Optional.of(user));
+
+        ReservationResponse res = reservationService.getReservation(50L, "test@test.com");
+
+        assertThat(res.getReservationId()).isEqualTo(50L);
+    }
+
+    @Test
+    @DisplayName("예약 상세 조회 — 타인 예약을 일반 사용자가 조회 시 ACCESS_DENIED")
+    void getReservation_otherUser_accessDenied() {
+        Reservation reservation = Reservation.builder()
+                .user(user).zone(zone)
+                .reservationsTitle("팀 미팅")
+                .startAt(LocalDateTime.now().plusHours(1))
+                .endAt(LocalDateTime.now().plusHours(3))
+                .build();
+        ReflectionTestUtils.setField(reservation, "reservationsId", 50L);
+
+        User other = User.builder()
+                .employeeNumber("EMP002").employeeName("김타인")
+                .employeeEmail("other@test.com").password("pw")
+                .role(UserRole.USER).position("사원")
+                .status(UserStatus.ACTIVE).hiredAt(java.time.LocalDate.now())
+                .build();
+        ReflectionTestUtils.setField(other, "userId", 2L);
+
+        given(reservationRepository.findByIdWithDetails(50L)).willReturn(Optional.of(reservation));
+        given(userRepository.findByEmployeeEmail("other@test.com")).willReturn(Optional.of(other));
+
+        assertThatThrownBy(() -> reservationService.getReservation(50L, "other@test.com"))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.ACCESS_DENIED));
+    }
+
+    @Test
+    @DisplayName("예약 상세 조회 — 없는 예약 시 RESERVATION_NOT_FOUND")
+    void getReservation_notFound() {
+        given(reservationRepository.findByIdWithDetails(999L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reservationService.getReservation(999L, "test@test.com"))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.RESERVATION_NOT_FOUND));
+    }
+
+    @Test
     @DisplayName("예약 취소 성공")
     void cancelReservation_success() {
         Reservation reservation = Reservation.builder()

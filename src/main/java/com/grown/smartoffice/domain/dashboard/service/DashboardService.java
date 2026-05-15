@@ -9,6 +9,7 @@ import com.grown.smartoffice.domain.dashboard.dto.AttendanceTodayResponse;
 import com.grown.smartoffice.domain.dashboard.dto.DashboardSummaryResponse;
 import com.grown.smartoffice.domain.dashboard.dto.RecentAccessResponse;
 import com.grown.smartoffice.domain.dashboard.dto.SensorCurrentResponse;
+import com.grown.smartoffice.domain.device.entity.DeviceStatus;
 import com.grown.smartoffice.domain.device.repository.DeviceRepository;
 import com.grown.smartoffice.domain.reservation.entity.ReservationStatus;
 import com.grown.smartoffice.domain.reservation.repository.ReservationRepository;
@@ -44,7 +45,7 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getSummary() {
         int totalUsers    = (int) userRepository.countByStatus(UserStatus.ACTIVE);
-        int activeDevices = (int) deviceRepository.countByDeviceStatus("ACTIVE");
+        int activeDevices = (int) deviceRepository.countByDeviceStatus(DeviceStatus.ACTIVE);
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay   = startOfDay.plusDays(1);
         int todayReservations = (int) reservationRepository.countTodayConfirmed(

@@ -9,6 +9,8 @@ import com.grown.smartoffice.domain.device.entity.Device;
 import com.grown.smartoffice.domain.device.repository.DeviceRepository;
 import com.grown.smartoffice.domain.zone.entity.Zone;
 import com.grown.smartoffice.domain.zone.repository.ZoneRepository;
+import com.grown.smartoffice.global.exception.CustomException;
+import com.grown.smartoffice.global.exception.ErrorCode;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -44,7 +47,7 @@ class ControlServiceTest {
         ControlRequest req = ControlRequest.builder()
                 .zoneId(1L)
                 .deviceId(10L)
-                .command("POWER_ON")
+                .command("AC")
                 .value("24")
                 .build();
 
@@ -70,5 +73,29 @@ class ControlServiceTest {
         assertThat(res.getControlId()).isEqualTo(1001L);
         verify(controlCommandRepository).save(any(ControlCommand.class));
         verify(mqttClient).publish(any(), any());
+    }
+
+    @Test
+    @DisplayName("제어 명령 발송 — enum 외 값 → INVALID_COMMAND_TYPE (#12 회귀 방지)")
+    void sendCommand_invalidCommandType() {
+        ControlRequest req = ControlRequest.builder()
+                .zoneId(1L)
+                .deviceId(10L)
+                .command("POWER_ON")
+                .value("24")
+                .build();
+
+        Zone zone = Zone.builder().zoneName("1층").build();
+        ReflectionTestUtils.setField(zone, "zoneId", 1L);
+        Device device = Device.builder().deviceName("에어컨").build();
+        ReflectionTestUtils.setField(device, "devicesId", 10L);
+
+        given(zoneRepository.findById(1L)).willReturn(Optional.of(zone));
+        given(deviceRepository.findById(10L)).willReturn(Optional.of(device));
+
+        assertThatThrownBy(() -> controlService.sendCommand(req))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_COMMAND_TYPE);
     }
 }

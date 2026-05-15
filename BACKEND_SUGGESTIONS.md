@@ -25,6 +25,8 @@
 
 **우선순위 근거**: 프론트 UI 가 이미 외주 단계에서 들어와 있어 mock 의존도가 가장 높다. 도입 시 사이드바 메뉴 즉시 복구 가능.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`d957e29`, 2026-05-15) — `guest` 도메인 신설. `guests` 테이블(V13) + GuestStatus enum (SCHEDULED→VISITING→COMPLETED, CANCELLED). CRUD 5종 + 체크인/체크아웃 (`/api/v1/guests`, ADMIN). 체크인은 SCHEDULED, 체크아웃은 VISITING 상태에서만 허용. ErrorCode 3종 추가 (GUEST_NOT_FOUND·GUEST_CHECK_IN/OUT_NOT_ALLOWED). curl 전수 검증 (등록→목록 필터→체크인→체크인 재호출 400→체크아웃→삭제). NFC 임시 카드 연동(선택 제안)은 미채택. web 후속: GuestTable mock 을 실 API 로 전환 + 사이드바 메뉴 복구 — web/SUGGESTIONS.md #5 append.
+
 ---
 
 ## 2. (저) Refresh Token httpOnly 쿠키 전환 — 후속 제안
@@ -42,6 +44,8 @@
 
 **본 통합 작업에서는 채택하지 않음** — SecurityConfig·운영 도메인·CORS 정책 변경이 동반되므로 별도 보안 강화 작업으로 분리.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`fbc2b1b`, 2026-05-15) — Refresh Token httpOnly 쿠키 전환. `RefreshTokenCookieProvider` 신설 (쿠키 발급·소거·추출). login 응답에 `Set-Cookie: refreshToken` (HttpOnly·SameSite=Lax·Path=/api/v1/auth·Max-Age=7일). refresh 는 쿠키 우선 사용·부재 시 body 폴백 (web 미수정 호환), logout 은 쿠키 즉시 만료. SecurityConfig CORS `allowCredentials(true)` + 명시적 origin 목록. secure/same-site 는 프로파일별 설정 (로컬 http=false, 운영 https=true·`app.refresh-cookie.*`). curl Set-Cookie 헤더 + 쿠키 기반 refresh 검증. web 후속: axios `withCredentials: true` 활성화 + `tokenStorage.refreshToken` 제거 — web/SUGGESTIONS.md #6 append.
+
 ---
 
 ## 3. (저) "시스템 설정" 페이지용 API 정리
@@ -58,6 +62,8 @@
 
 본 통합 작업에서는 "시스템 설정" 라우트를 *준비 중* placeholder 로 두고 진행했다.
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`bee8336`, 2026-05-15) — `user_preferences` 테이블(V14) 신설 (제안 옵션 중 별도 테이블 채택). user_id 가 PK 이자 users FK (1:1). GET/PUT `/api/v1/users/me/preferences` (본인, JWT subject 기준). 필드: notifications_enabled·language·theme·push_token. 설정 행은 최초 조회/수정 시 기본값(알림 on·ko·light)으로 lazy 생성. PUT 은 부분 수정 (null 필드 기존 값 유지). curl 검증 (lazy 기본값 생성 + 부분 수정). web 후속: 시스템 설정 페이지가 preferences API 채택 — web/SUGGESTIONS.md #7 append.
+
 ---
 
 ## 4. (저) Dashboard 응답 타입 OpenAPI 보강 + openapi-typescript 검토
@@ -72,6 +78,8 @@
   - nullable / required 표기 일관성
   - 예시값(`@Schema(example = ...)`) — 자동 타입 생성에는 영향 없지만 Swagger UI 가독성에 기여
 - 본 통합 작업의 프론트 `src/features/{domain}/types.ts` 는 수동 1:1 매핑 중. 도메인 수가 늘면 자동 생성 검토 가치 ↑.
+
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`25a70a5`, 2026-05-15) — 대시보드 응답 DTO 4종 (DashboardSummaryResponse·AttendanceTodayResponse·RecentAccessResponse·SensorCurrentResponse)에 `@Schema` (description + example) 추가. `/v3/api-docs` 노출 확인. openapi-typescript 도입은 web 측 판단 사항으로 본 백엔드 작업 범위 외 — 전 도메인 DTO 일괄 annotation 도 후속 과제로 잔존.
 
 ---
 
@@ -99,6 +107,8 @@
 
 **출처 세션**: `SmartOffice-web` 플랜 2 인증 도메인 마이그레이션 (2026-05).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`e500388`, 2026-05-15) — `ApiResponse` 에 `errorCode` 필드 추가 (값 = `ErrorCode.name()` enum 식별자, 정상 응답에서는 `@JsonInclude(NON_NULL)` 로 직렬화 제외). `GlobalExceptionHandler` 전 핸들러 + `JwtAuthenticationEntryPoint`/`JwtAccessDeniedHandler` 가 식별자 전파 (검증 오류는 `INVALID_INPUT`, 미인증은 `UNAUTHENTICATED`, 권한 거부는 `ACCESS_DENIED`). curl 4xx 응답 `errorCode` 필드 확인 (`INVALID_CREDENTIALS`·`GUEST_CHECK_IN_NOT_ALLOWED`·`RESERVATION_NOT_FOUND` 등).
+
 ---
 
 ## 6. (하 / 검토) `reservation` 도메인 service-layer 본인/ADMIN 분기 일관성 점검
@@ -122,6 +132,8 @@
 **우선순위 근거**: 현재 동작에 문제 없음. 일관성·유지보수성·문서 정확도 차원의 개선이라 후순위.
 
 **출처 세션**: `SmartOffice-web` 플랜 3 사전 분석 — `reservation` 도메인 권한 분석 (2026-05).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 5 (`b6e282c`, 2026-05-15) — `reservation` 단건 엔드포인트 권한 검증 위치 통일. 진단 결과 `getReservation`(GET /{id})이 컨트롤러 `@PreAuthorize` 도 service 본인/ADMIN 검증도 없어 임의 인증 사용자가 타인 예약을 조회할 수 있던 불일치를 확인 — 수정·취소와 동일하게 service 레이어 본인/ADMIN 검증을 추가. `ReservationController` 에 "컬렉션 단위 = 컨트롤러 `@PreAuthorize` / 단건 = service 본인·ADMIN" 레이어 분담을 javadoc 으로 문서화. `@SelfOrAdmin` 공용 어노테이션 도입은 현 도메인 규모에서 과설계로 판단해 미채택. web(ADMIN 클라이언트)은 영향 없음 — `checkOwnership` 가 ADMIN 은 항상 통과.
 
 ---
 
@@ -162,6 +174,8 @@ curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/dashboard
 **우선순위**: 상. KPI 카드는 대시보드의 first visible content. 다른 dashboard 3종 응답은 정상이므로 본 1건 수정만으로 G2 완성도 회복.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 2 백엔드 curl 검증 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 1 (`d96e77d` fix + `5edb416` test, 2026-05-15) — `DeviceRepository.countByDeviceStatus(String)` ↔ `Device.deviceStatus` enum 타입 불일치 (Hibernate 7.2.7 InvalidDataAccessApiUsageException) 가 진짜 원인. 시그니처를 `DeviceStatus` enum 으로 변경 + `DashboardService.getSummary` 호출도 `DeviceStatus.ACTIVE` enum 으로 변경. curl `GET /dashboard/summary` 200 + 4 필드 모두 정수 (`{activeDevices:18, todayReservations:5, totalUsers:10, pendingApprovals:0}`). web `/dashboard` KPI 4종 (현재 출근 0/10, 오늘 예약 5, 활성 장치 18, 전체 사용자 10) 복원 시각 검증 통과. `DashboardServiceTest.getSummary_emptyData` 데이터 없음 케이스 단위 테스트 추가.
 
 ---
 
@@ -214,6 +228,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 4 백엔드 curl 검증 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 2 (`55a6c37` V9 마이그레이션, 2026-05-15) — `UPDATE access_logs SET auth_result = 'APPROVED' WHERE auth_result = 'ALLOW'` 1회 실행. curl 검증: `GET /access-logs?authResult=ALLOW` totalElements=0 (이전 8) / `GET /access-logs?authResult=APPROVED` totalElements=61 (이전 53+8). web 측 후속: `features/accesslog/types.ts` ALLOW literal 호환 제거 권장 (web/SUGGESTIONS.md #2 append).
+
 ---
 
 ## 9. (중) POWER 미터 보유 zone 목록 엔드포인트 추가 — `GET /api/v1/power/zones`
@@ -253,6 +269,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: 중. 현재 임시 하드코딩으로 동작 가능하나, zone 변경 시 web 수동 동기화 부담 + 시드 기반 가정이 운영 환경과 어긋날 가능성 있음.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 G2 `PowerCurrentWidget` 결함 분석 — 옵션 4(자체 셀렉터 + 임시 하드코딩 + BACKEND_SUGGESTIONS) 채택 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`6445b64`, 2026-05-15) — `GET /api/v1/power/zones` 신설. `sensor_logs.sensor_type='POWER'` distinct zone 집계 + `meterCount`. 신규 DTO 2종 (PowerZoneListResponse + PowerZoneProjection) + SensorLogRepository.findPowerZones() nativeQuery. curl: 200 + zone 4건 (2/4/5/7, 각 meterCount=1). web 후속: `POWER_ZONES_TEMP` 제거 → `usePowerZones()` 전환 권장 (web/SUGGESTIONS.md #3).
 
 ---
 
@@ -297,6 +315,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 0단계 read-only 검증 (차이 #1) — `ZoneListItemResponse` DTO 충족성 검증 완료 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`154636a`, 2026-05-15) — `GET /api/v1/zones/{id}` 신설. `ZoneListItemResponse` 6 필드 재사용 (별도 ZoneDetailResponse 미신설 — 현재 detail 표시 필드 100% 충족). `ZoneService.getZoneDetail(Long)` 부재 시 ZONE_NOT_FOUND. curl: `GET /zones/5` 200 + 6 필드 정합. web 후속: `useZoneDetail(id)` 의 `useZones()` find 우회 제거 → `useQuery` 전환 권장 (web/SUGGESTIONS.md #3).
+
 ---
 
 ## 11. (상) `GET /api/v1/power/zones/{zoneId}/hourly` HTTP 500 결함
@@ -331,6 +351,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 4 종료 curl 검증 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 1 (`bfe28be` fix + `4a8d744` test, 2026-05-15) — 마스터플랜 가설 1 (interface projection snake_case alias 매핑) 은 결함 아니었음. 실제 원인은 `findHourlyPowerProjection` nativeQuery 의 SELECT `DATE_FORMAT(sl.logged_at, '%Y-%m-%dT%H:00:00') AS hour_at` ↔ GROUP BY `DATE_FORMAT(sl.logged_at, '%Y-%m-%d %H')` 패턴 불일치 → MySQL `only_full_group_by` 모드에서 Expression #4 비집계 컬럼 거부 (SQLSyntaxErrorException). GROUP BY 패턴을 SELECT 와 정확히 동일한 `'%Y-%m-%dT%H:00:00'` 로 통일. 클라이언트 fmt parser 영향 0. curl `GET /power/zones/5/hourly` 200 + `logs[]` 9건 정상 (zone 5 개발팀 좌석, device 9 개발팀 전력미터, hourAt 패턴 `yyyy-MM-ddTHH:00:00`). web `/building` 시간별 전력 사용량 + `/zones` 전력 탭 복원 시각 검증 통과. `PowerServiceIntegrationTest` 신설 (Testcontainers MySQL + V7/V8 시드, zone 5/2 hourly + ZONE_NOT_FOUND 3 시나리오).
+
 ---
 
 ## 12. (중) `control_commands.command_type` 정의 부재 — enum 또는 메타 엔드포인트 권장
@@ -358,6 +380,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: 중. 현재 web 하드코딩으로 동작 가능하나, IoT 측 컨벤션 변경 또는 신규 명령 추가 시 web 수동 동기화 부담 + 잘못된 string 발송 가능성. 시연 후 정리 권장.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 시각 검증 후속 (ControlPanel 명령 종류 검토, 2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`4af6d36` fix + `ec58654` test, 2026-05-15) — 옵션 (A) 채택. 신규 enum `ControlCommandType` (AC | LIGHT | FAN | DOOR_LOCK | SET_TEMPERATURE). `ControlCommand.commandType` 컬럼 String → enum + `@Enumerated(EnumType.STRING)` (DB varchar(15) 호환). `ControlService.sendCommand` 에서 `ControlCommandType.valueOf()` 변환 + `INVALID_COMMAND_TYPE` (400) 거부. curl: POST `/controls {"command":"POWER_ON"}` → 400 "지원하지 않는 제어 명령 유형입니다.". web `ControlPanel.QUICK_COMMANDS` (AC/LIGHT/FAN/DOOR_LOCK) 는 enum 과 정합 — web 변경 불필요.
 
 ---
 
@@ -397,6 +421,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: **상** — zone 수정이 admin 운영 기능의 핵심 액션 중 하나이며, 현재 완전 차단 상태. 시연 영향도 큼.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 6 시각 재검증 (Fix 7, 2026-05-14).
+
+**처리 완료**: PR #27 (`a32d146`, 2026-05-15) — `ZoneUpdateRequest.clearParent` Boolean wrapper + `@Setter` + `ZoneServiceImpl` null safe + `Zone.update()` partial update null 가드. ZoneControllerTest PUT 5 시나리오 + ZoneInfoTab 시각 검증 통과. clearParent flag 의미 정정은 별도 sprint (`SUGGESTIONS.md` #17 분리 등록).
 
 ---
 
@@ -444,6 +470,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 0단계 검증 (차이 C, 2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 4 (`848ff31` 4-a Vehicle V11 + `b7d9809` 4-b ParkingReservation V12, 2026-05-15) — 옵션 (A) 채택. Vehicle 엔티티 (plate_number UNIQUE + owner_user_id FK users + type STAFF/VISITOR + purpose) + ParkingReservation 엔티티 (vehicle FK + zone FK + spot FK nullable + status RESERVED/PARKED/EXITED + reserved_at/entry_at/exit_at). 각 CRUD 5종 컨트롤러 (`/api/v1/vehicles`, `/api/v1/parking/reservations`, ADMIN). 단위/통합 테스트 15건. curl 통합 흐름 검증: Vehicle 생성(STAFF, ownerUserId FK) → ParkingReservation 연결(RESERVED) → 입차 PUT(PARKED, spot 배정 + entry_at) → CRUD DELETE 정리 모두 정상. web 후속: ParkingManagement 차량/예약 UI 신설 권장 (web/SUGGESTIONS.md #4).
+
 ---
 
 ## [2026-05-14] (저~중) GET /api/v1/parking/zones — 주차면 보유 zone 목록 조회 엔드포인트 신설
@@ -481,6 +509,8 @@ GET /api/v1/parking/zones
 **우선순위**: 저~중 — 현재 web 우회 동작 가능. 백엔드 부하·UX 정합도 측면에서 채택 권장. dashboard/sensors-current 와 유사한 도메인별 zone 목록 패턴.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 시각 검증 결함 12-1 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 3 (`513732c`, 2026-05-15) — 옵션 (A) 채택. `GET /api/v1/parking/zones` 신설. 주차면 1건 이상 보유 zone 집계 + `totalSpots`/`occupiedSpots` 포함. 신규 DTO 2종 (ParkingZoneListResponse + ParkingZoneProjection) + ParkingSpotRepository.findParkingZones() JPQL projection. curl: 200 + zone 2건 (지하1층 15면/6점유, 지하2층 10면/4점유). web 후속: `useParkingSpots({})` distinct 우회 제거 → `useParkingZones()` 전환 권장 (web/SUGGESTIONS.md #3).
 
 ---
 
@@ -532,6 +562,8 @@ ALTER TABLE parking_spots
 **우선순위**: 중 — 데이터 무결성 + UX 정합. 시연 환경에서 발견 가능한 결함이라 우선 처리 권장. `spot_number`/`device` 유니크와 동일 레벨.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 시각 재검증 좌표 충돌 진단 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 2 (`7975c49` fix + `3101713` test, 2026-05-15) — V10 `ALTER TABLE parking_spots ADD CONSTRAINT UQ_PARKING_SPOTS_POSITION UNIQUE (zone_id, position_x, position_y)` + `ParkingServiceImpl.validatePosition` 헬퍼 (null XOR 가드 + 좌표 충돌 검증) → createSpot/updateSpot 양쪽 적용 + ErrorCode 신규 2건 (`DUPLICATE_SPOT_POSITION` 409 / `INVALID_POSITION_PAIR` 400). MySQL UNIQUE 의 NULL ≠ NULL 정책으로 grid fallback (좌표 둘 다 null) 자유 통과. ParkingServiceIntegrationTest 신규 3 시나리오 (null XOR / 좌표 충돌 / grid fallback) 통과. curl 검증: POST `/parking/spots` (zone 8, x=6, y=1 = B1-006 동일 좌표) → 409 "동일 구역 내 중복된 주차면 좌표입니다.", `{positionX:99}` only → 400 "주차면 좌표는 X/Y 둘 다 입력하거나 둘 다 비워야 합니다.". web 측 후속: `ParkingSpotsTable` 사전 검증 로직 제거 권장.
 
 ---
 

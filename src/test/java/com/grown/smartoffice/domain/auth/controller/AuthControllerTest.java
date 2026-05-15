@@ -5,21 +5,25 @@ import com.grown.smartoffice.domain.auth.dto.LoginResponse;
 import com.grown.smartoffice.domain.auth.dto.MeResponse;
 import com.grown.smartoffice.domain.auth.dto.TokenRefreshResponse;
 import com.grown.smartoffice.domain.auth.service.AuthService;
+import com.grown.smartoffice.domain.auth.support.RefreshTokenCookieProvider;
 import com.grown.smartoffice.global.exception.CustomException;
 import com.grown.smartoffice.global.exception.ErrorCode;
 import com.grown.smartoffice.support.TestSecurityConfig;
 import com.grown.smartoffice.support.WithMockAdminUser;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -27,11 +31,12 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, RefreshTokenCookieProvider.class})
 class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -60,7 +65,10 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("success"))
                 .andExpect(jsonPath("$.data.accessToken").value("at"))
-                .andExpect(jsonPath("$.data.user.role").value("ADMIN"));
+                .andExpect(jsonPath("$.data.user.role").value("ADMIN"))
+                // Refresh Token 은 httpOnly 쿠키로 발급
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=rt")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")));
     }
 
     @Test
@@ -91,13 +99,15 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("error"));
+                .andExpect(jsonPath("$.code").value("error"))
+                // #5 — 에러 응답에 ErrorCode 식별자 필드 노출
+                .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"));
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/refresh — 정상 요청 → 200")
-    void refresh_ok() throws Exception {
-        given(authService.refresh(any()))
+    @DisplayName("POST /api/v1/auth/refresh — body 폴백 정상 요청 → 200")
+    void refresh_bodyFallback_ok() throws Exception {
+        given(authService.refresh(eq("valid-rt")))
                 .willReturn(TokenRefreshResponse.builder()
                         .accessToken("new-at").tokenType("Bearer").expiresIn(1800).build());
 
@@ -106,6 +116,19 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").value("new-at"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/refresh — httpOnly 쿠키 우선 사용 → 200")
+    void refresh_viaCookie_ok() throws Exception {
+        given(authService.refresh(eq("cookie-rt")))
+                .willReturn(TokenRefreshResponse.builder()
+                        .accessToken("new-at").tokenType("Bearer").expiresIn(1800).build());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new Cookie("refreshToken", "cookie-rt")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.accessToken").value("new-at"));
     }
@@ -123,7 +146,10 @@ class AuthControllerTest {
     void logout_ok() throws Exception {
         mockMvc.perform(post("/api/v1/auth/logout"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("success"));
+                .andExpect(jsonPath("$.code").value("success"))
+                // 로그아웃 시 Refresh Token 쿠키 즉시 만료 (Max-Age=0)
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
 
         verify(authService).logout("admin@grown.com");
     }
@@ -159,6 +185,20 @@ class AuthControllerTest {
 
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("error"));
+                .andExpect(jsonPath("$.code").value("error"))
+                .andExpect(jsonPath("$.errorCode").value("ACCOUNT_INACTIVE"));
+    }
+
+    @Test
+    @DisplayName("정상 응답에는 errorCode 필드가 노출되지 않음")
+    @WithMockAdminUser
+    void successResponse_omitsErrorCode() throws Exception {
+        given(authService.getMe("admin@grown.com"))
+                .willReturn(MeResponse.builder().id(1L).email("admin@grown.com").role("ADMIN").build());
+
+        mockMvc.perform(get("/api/v1/auth/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("success"))
+                .andExpect(jsonPath("$.errorCode").doesNotExist());
     }
 }

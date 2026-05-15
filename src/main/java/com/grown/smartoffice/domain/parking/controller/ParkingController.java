@@ -61,6 +61,15 @@ public class ParkingController {
                 ApiResponse.success("정상 조회되었습니다.", parkingService.getSpots(zoneId, spotType, status)));
     }
 
+    @Operation(summary = "주차면 보유 구역 목록 [ADMIN]",
+               description = "parking_spots 가 1건 이상 등록된 zone 집계. 응답에 totalSpots/occupiedSpots 포함.")
+    @GetMapping("/zones")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ParkingZoneListResponse>>> getParkingZones() {
+        return ResponseEntity.ok(
+                ApiResponse.success("정상 조회되었습니다.", parkingService.getParkingZones()));
+    }
+
     @Operation(summary = "주차장 전체 현황 조회", description = "구역별 총 주차면·점유·여유 수와 주차면 상세 목록.")
     @GetMapping("/zones/{zoneId}/spots")
     public ResponseEntity<ApiResponse<ParkingZoneSummaryResponse>> getZoneSummary(

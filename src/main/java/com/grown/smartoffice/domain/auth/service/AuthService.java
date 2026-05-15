@@ -88,10 +88,8 @@ public class AuthService {
     // ── 토큰 재발급 ───────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public TokenRefreshResponse refresh(TokenRefreshRequest request) {
-        String token = request.getRefreshToken();
-
-        if (!jwtTokenProvider.validateToken(token)) {
+    public TokenRefreshResponse refresh(String token) {
+        if (token == null || token.isBlank() || !jwtTokenProvider.validateToken(token)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
