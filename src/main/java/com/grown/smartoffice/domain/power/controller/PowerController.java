@@ -22,6 +22,15 @@ public class PowerController {
 
     private final PowerService powerService;
 
+    @Operation(summary = "POWER 미터 보유 구역 목록 [ADMIN]",
+               description = "sensor_logs.sensor_type='POWER' 가 등록된 zone 을 distinct 집계. 응답에 meterCount 포함.")
+    @GetMapping("/zones")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<java.util.List<PowerZoneListResponse>>> getPowerZones() {
+        return ResponseEntity.ok(ApiResponse.success("정상 조회되었습니다.",
+                powerService.getPowerZones()));
+    }
+
     @Operation(summary = "구역별 실시간 전력 현황 [ADMIN]",
                description = "POWER 타입 센서 로그에서 장치별 최신 전력값을 반환합니다.")
     @GetMapping("/zones/{zoneId}/current")
