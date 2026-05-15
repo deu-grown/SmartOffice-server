@@ -216,6 +216,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 4 백엔드 curl 검증 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 2 (`55a6c37` V9 마이그레이션, 2026-05-15) — `UPDATE access_logs SET auth_result = 'APPROVED' WHERE auth_result = 'ALLOW'` 1회 실행. curl 검증: `GET /access-logs?authResult=ALLOW` totalElements=0 (이전 8) / `GET /access-logs?authResult=APPROVED` totalElements=61 (이전 53+8). web 측 후속: `features/accesslog/types.ts` ALLOW literal 호환 제거 권장 (web/SUGGESTIONS.md #2 append).
+
 ---
 
 ## 9. (중) POWER 미터 보유 zone 목록 엔드포인트 추가 — `GET /api/v1/power/zones`
@@ -538,6 +540,8 @@ ALTER TABLE parking_spots
 **우선순위**: 중 — 데이터 무결성 + UX 정합. 시연 환경에서 발견 가능한 결함이라 우선 처리 권장. `spot_number`/`device` 유니크와 동일 레벨.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-3 시각 재검증 좌표 충돌 진단 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 2 (`7975c49` fix + `3101713` test, 2026-05-15) — V10 `ALTER TABLE parking_spots ADD CONSTRAINT UQ_PARKING_SPOTS_POSITION UNIQUE (zone_id, position_x, position_y)` + `ParkingServiceImpl.validatePosition` 헬퍼 (null XOR 가드 + 좌표 충돌 검증) → createSpot/updateSpot 양쪽 적용 + ErrorCode 신규 2건 (`DUPLICATE_SPOT_POSITION` 409 / `INVALID_POSITION_PAIR` 400). MySQL UNIQUE 의 NULL ≠ NULL 정책으로 grid fallback (좌표 둘 다 null) 자유 통과. ParkingServiceIntegrationTest 신규 3 시나리오 (null XOR / 좌표 충돌 / grid fallback) 통과. curl 검증: POST `/parking/spots` (zone 8, x=6, y=1 = B1-006 동일 좌표) → 409 "동일 구역 내 중복된 주차면 좌표입니다.", `{positionX:99}` only → 400 "주차면 좌표는 X/Y 둘 다 입력하거나 둘 다 비워야 합니다.". web 측 후속: `ParkingSpotsTable` 사전 검증 로직 제거 권장.
 
 ---
 

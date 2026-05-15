@@ -303,9 +303,9 @@
 | 1 | #7 dashboard summary 500 | 완료 | `d96e77d` (fix) + `5edb416` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `DeviceRepository.countByDeviceStatus` 시그니처 String → DeviceStatus enum (Hibernate 7.2.7 type mismatch 가 진짜 원인). 데이터 없음 케이스 단위 테스트 추가 |
 | 1 | #11 power hourly 500 | 완료 | `bfe28be` (fix) + `4a8d744` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `findHourlyPowerProjection` GROUP BY DATE_FORMAT 패턴 SELECT 와 통일 (only_full_group_by 가 진짜 원인, 마스터플랜 가설 1 projection 매핑은 무관). PowerServiceIntegrationTest 신설 |
 | 1 | 묶음 1 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | /dashboard KPI 4종 (현재 출근 0/10·오늘 예약 5·활성 장치 18·전체 사용자 10) + /building 시간별 전력 + /zones 전력 탭 복원 |
-| 2 | #8 V9 ALLOW→APPROVED | 대기 | — | — | — | — | Flyway 마이그레이션 |
-| 2 | #16 parking_spots V10 UNIQUE + null XOR | 대기 | — | — | — | — | Flyway + Service 검증 + DTO 검증 |
-| 2 | 묶음 2 시각 검증 | 대기 | — | — | — | — | /access-logs APPROVED 일관성 + /parking-spots 충돌 시도 |
+| 2 | #8 V9 ALLOW→APPROVED | 완료 | `55a6c37` | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | curl: ALLOW 0건 / APPROVED 61건 (이전 53+8). web 측 ALLOW literal 호환 제거 권장 SUGGESTIONS append |
+| 2 | #16 parking_spots V10 UNIQUE + null XOR | 완료 | `7975c49` (fix) + `3101713` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | UNIQUE 제약 + Service validatePosition (null XOR + 좌표 충돌) + ErrorCode 2건. curl: 동일 좌표 409 + null XOR 400 |
+| 2 | 묶음 2 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | BE curl 검증 통과 (#8 ALLOW→APPROVED 정합 + #16 좌표 충돌 차단 정합). web 측 결함 발견(Select 영어 표시값 + ALLOW 옵션 잔존) → web/SUGGESTIONS.md #2 append |
 | 3 | #9 GET /power/zones | 대기 | — | — | — | — | 신설 엔드포인트 |
 | 3 | #10 GET /zones/{id} | 대기 | — | — | — | — | 신설 엔드포인트 |
 | 3 | #12 ControlCommandType enum | 대기 | — | — | — | — | enum 정합 |
