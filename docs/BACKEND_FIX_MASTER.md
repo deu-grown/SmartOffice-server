@@ -245,7 +245,7 @@ public class ZoneUpdateRequest {
 | 1 | #7 (1-B) | 대기 | — | — | — | 1-A 완료 후 |
 | 1 | #11 power hourly 500 (1-A) | 대기 | — | — | — | 별도 plan mode 세션 |
 | 1 | #11 (1-B) | 대기 | — | — | — | 1-A 완료 후 |
-| 1 | #13 zone PUT deserialize | 대기 | — | — | — | 즉시 수정 가능 (옵션 A) |
+| 1 | #13 zone PUT deserialize | 완료 | #27 (`a32d146`) | 2026-05-15 | 2026-05-15 | 옵션 A 채택 + `Zone.update()` partial update null 가드 동봉. SUGGESTIONS #17 분리 등록. ZoneControllerTest PUT 5 시나리오 + ZoneInfoTab 시각 검증 통과 |
 | 2~4 | — | TBD | — | — | — | 플랜 1 완료 후 정의 |
 
 ---

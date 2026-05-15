@@ -398,6 +398,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 6 시각 재검증 (Fix 7, 2026-05-14).
 
+**처리 완료**: PR #27 (`a32d146`, 2026-05-15) — `ZoneUpdateRequest.clearParent` Boolean wrapper + `@Setter` + `ZoneServiceImpl` null safe + `Zone.update()` partial update null 가드. ZoneControllerTest PUT 5 시나리오 + ZoneInfoTab 시각 검증 통과. clearParent flag 의미 정정은 별도 sprint (`SUGGESTIONS.md` #17 분리 등록).
+
 ---
 
 ## [2026-05-14] (저~중) 주차 차량(Vehicle)/예약(Reservation) 모델 신설 검토
