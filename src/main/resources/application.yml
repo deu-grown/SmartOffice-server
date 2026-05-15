@@ -53,3 +53,12 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 1800000    # 30분
   refresh-token-expiration: 604800000  # 7일
+
+app:
+  cors:
+    # 쉼표 구분 다중 origin. 운영 환경은 CORS_ALLOWED_ORIGINS 환경변수로 주입
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  refresh-cookie:
+    # Refresh Token httpOnly 쿠키 — 로컬(http) 기본 false, 운영(https) true
+    secure: ${REFRESH_COOKIE_SECURE:false}
+    same-site: ${REFRESH_COOKIE_SAME_SITE:Lax}

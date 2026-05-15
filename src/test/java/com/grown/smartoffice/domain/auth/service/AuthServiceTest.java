@@ -3,7 +3,6 @@ package com.grown.smartoffice.domain.auth.service;
 import com.grown.smartoffice.domain.auth.dto.LoginRequest;
 import com.grown.smartoffice.domain.auth.dto.LoginResponse;
 import com.grown.smartoffice.domain.auth.dto.MeResponse;
-import com.grown.smartoffice.domain.auth.dto.TokenRefreshRequest;
 import com.grown.smartoffice.domain.auth.dto.TokenRefreshResponse;
 import com.grown.smartoffice.domain.department.entity.Department;
 import com.grown.smartoffice.domain.user.entity.User;
@@ -154,7 +153,7 @@ class AuthServiceTest {
                 .willReturn("new-access");
         given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1_800_000L);
 
-        TokenRefreshResponse res = authService.refresh(refreshRequest("refresh-ok"));
+        TokenRefreshResponse res = authService.refresh("refresh-ok");
 
         assertThat(res.getAccessToken()).isEqualTo("new-access");
         assertThat(res.getExpiresIn()).isEqualTo(1800);
@@ -165,7 +164,16 @@ class AuthServiceTest {
     void refresh_invalidToken_throws() {
         given(jwtTokenProvider.validateToken("bad")).willReturn(false);
 
-        assertThatThrownBy(() -> authService.refresh(refreshRequest("bad")))
+        assertThatThrownBy(() -> authService.refresh("bad"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_TOKEN);
+    }
+
+    @Test
+    @DisplayName("refresh 토큰이 null (쿠키·body 모두 부재) → INVALID_TOKEN")
+    void refresh_nullToken_throws() {
+        assertThatThrownBy(() -> authService.refresh(null))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_TOKEN);
@@ -179,7 +187,7 @@ class AuthServiceTest {
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get("auth:refresh:admin@grown.com")).willReturn(null);
 
-        assertThatThrownBy(() -> authService.refresh(refreshRequest("ok")))
+        assertThatThrownBy(() -> authService.refresh("ok"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ErrorCode.REFRESH_TOKEN_EXPIRED);
@@ -193,7 +201,7 @@ class AuthServiceTest {
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get("auth:refresh:admin@grown.com")).willReturn("different");
 
-        assertThatThrownBy(() -> authService.refresh(refreshRequest("current")))
+        assertThatThrownBy(() -> authService.refresh("current"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_TOKEN);
@@ -247,12 +255,6 @@ class AuthServiceTest {
         LoginRequest r = new LoginRequest();
         ReflectionTestUtils.setField(r, "email", email);
         ReflectionTestUtils.setField(r, "password", password);
-        return r;
-    }
-
-    private TokenRefreshRequest refreshRequest(String token) {
-        TokenRefreshRequest r = new TokenRefreshRequest();
-        ReflectionTestUtils.setField(r, "refreshToken", token);
         return r;
     }
 }
