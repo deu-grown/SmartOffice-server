@@ -61,7 +61,7 @@ public class Zone {
     public void update(String zoneName, ZoneType zoneType, Zone parent, String zoneDescription) {
         if (zoneName != null) this.zoneName = zoneName;
         if (zoneType != null) this.zoneType = zoneType;
-        this.parent = parent;
-        this.zoneDescription = zoneDescription;
+        if (parent != null) this.parent = parent;
+        if (zoneDescription != null) this.zoneDescription = zoneDescription;
     }
 }

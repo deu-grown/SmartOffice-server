@@ -535,6 +535,51 @@ ALTER TABLE parking_spots
 
 ---
 
+## [2026-05-15] (중) Zone partial update — clearParent flag 의미를 Zone.update()에 정확 반영
+
+**발생 맥락**: 백엔드 수정 sprint 플랜 1 #13 (PUT /zones/{id} body deserialize fix) 0단계 진단 중 발견. `Zone.update()` (`domain/zone/entity/Zone.java:61`) 의 `parent` / `zoneDescription` 필드가 무가드로 덮어쓰여 부분 수정 시 데이터 손실 발생 가능성 노출 — `{"name":"새이름"}` body 만 보내면 기존 parent 와 description 이 모두 NULL 로 갱신됨. 시연 데이터 손실 방지 차원에서 본 PR 에서 null 가드만 추가하여 우회했으나, 그 결과 `clearParent=true` (의도적 parent 제거) 시나리오가 무력화됨.
+
+**현황**:
+
+- `Zone.update()` 수정 후: `if (parent != null) this.parent = parent;` / `if (zoneDescription != null) this.zoneDescription = zoneDescription;` (#13 PR 적용)
+- `ZoneServiceImpl.updateZone` (`domain/zone/service/ZoneServiceImpl.java:64`): `Boolean.TRUE.equals(request.getClearParent())` 결과를 **`currentParentId` 계산 (중복 이름 검증용) 에만 사용**. `Zone.update()` 호출 시 `newParent` 인자에는 반영하지 않음
+- 결과: `{"clearParent": true}` body 전송 시 200 응답이지만 DB 의 `zone_parent_id` 는 변경되지 않음 (기존 parent 보존)
+
+**clearParent flag 의 의도된 의미**
+
+- `clearParent=true`: 상위 구역 명시적 제거 (parent → null 로 강제 변경)
+- `clearParent=false` 또는 null: parentId 변경 의사 없음 (기존 parent 유지)
+- `parentId` 가 명시된 경우 (값 또는 null): clearParent 와 무관하게 해당 값으로 변경
+
+**제안 범위 (택일)**
+
+- **(A) `Zone.update()` 시그니처에 `clearParent` boolean 인자 추가 (간단)**:
+  - `zone.update(name, type, parent, description, clearParent)` — `if (clearParent || parent != null) this.parent = parent;`
+  - `ZoneServiceImpl` 호출 측에서 flag 전달
+- **(B) `Zone` 에 별도 메서드 분리 (의도 명확)**:
+  - `updateMeta(name, type, description)` + `updateParent(Zone parent)` + `clearParent()` 3 메서드
+  - `ZoneServiceImpl` 가 request 의 의도(name 만 / parent 변경 / parent 제거) 에 따라 메서드 선택 호출
+- **(C) `ZoneServiceImpl` 가 `clearParent=true` 시 별도 처리 (가장 작은 변경)**:
+  - 기존 `zone.update(...)` 호출 후 `Boolean.TRUE.equals(request.getClearParent())` 시 `zone.clearParent()` 추가 호출
+  - `Zone` 에 `clearParent()` 메서드 (단순 `this.parent = null`) 신규 추가
+
+**근거**
+
+- 시연 환경의 zone 수정 모달은 현재 "parent 변경" 시나리오 위주이며 "parent 명시적 제거" 호출은 web 측 미확인 (현재 ZoneInfoTab 의 parent 변경 UI 자체가 미완성). 하지만 clearParent flag 자체가 DTO 에 존재하므로 의도된 사용처가 향후 개발될 가능성
+- (C) 옵션이 가장 작은 변경 — `Zone.update()` 시그니처 유지 + 호출 측 1 줄 추가
+- 단위 테스트: `ZoneServiceTest` 에 `updateZone_clearParentTrue_setsParentNull` / `updateZone_clearParentFalse_preservesParent` 2 케이스 추가 권장
+
+**채택 시 web 후속 작업**
+
+- 옵션 어느 것이든 web request body shape 변화 없음 (`clearParent` 필드 그대로 활용). web 측 추가 작업 불필요
+- ZoneInfoTab 에 "최상위로 변경" 버튼/체크박스 신규 추가 가능 (현재는 parent 변경 UI 자체가 미구현)
+
+**우선순위**: 중 — 현재 동작 가능 (#13 null 가드로 시연 데이터 손실 방지 완료) + clearParent 시나리오 사용처 web 측 미확인. 의미 정정은 후속 sprint 권장. `Zone` 도메인 모델 무결성 차원에서는 처리 필요.
+
+**출처 세션**: 백엔드 수정 sprint 플랜 1 #13 0단계 진단 (2026-05-15).
+
+---
+
 ## 검증 노트 (2026-05-14)
 
 본 통합 작업의 인증 도메인 마이그레이션 시점에 로컬 백엔드(`./gradlew bootRun` · 8080) 응답을 curl 로 직접 검증했다.

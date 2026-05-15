@@ -75,7 +75,7 @@ public class ZoneServiceImpl implements ZoneService {
         }
 
         String newName = request.getName() != null ? request.getName() : zone.getZoneName();
-        Long currentParentId = (request.isClearParent() || newParentId != null)
+        Long currentParentId = (Boolean.TRUE.equals(request.getClearParent()) || newParentId != null)
                 ? newParentId
                 : (zone.getParent() != null ? zone.getParent().getZoneId() : null);
 

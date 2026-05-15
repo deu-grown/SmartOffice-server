@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class ZoneUpdateRequest {
 
@@ -21,7 +23,7 @@ public class ZoneUpdateRequest {
     private Long parentId;
 
     @Schema(description = "변경 여부를 명시적으로 전달하기 위해 parentId와 함께 사용")
-    private boolean clearParent;
+    private Boolean clearParent;
 
     @Size(max = 255)
     @Schema(description = "변경할 구역 설명")

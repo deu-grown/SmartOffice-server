@@ -139,4 +139,87 @@ class ZoneControllerTest {
         mockMvc.perform(delete("/api/v1/zones/1"))
                 .andExpect(status().isConflict());
     }
+
+    // ── 수정 — body deserialize + partial update 회귀 방지 ──────
+
+    @Test
+    @DisplayName("PUT /zones/{id} — name 만 → 200")
+    @WithMockAdminUser
+    void update_nameOnly_200() throws Exception {
+        given(zoneService.updateZone(eq(1L), any())).willReturn(
+                ZoneUpdateResponse.builder().id(1L).name("새이름").zoneType(ZoneType.AREA).build());
+
+        String body = objectMapper.writeValueAsString(Map.of("name", "새이름"));
+
+        mockMvc.perform(put("/api/v1/zones/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("success"));
+
+        verify(zoneService).updateZone(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("PUT /zones/{id} — parentId 만 → 200")
+    @WithMockAdminUser
+    void update_parentIdOnly_200() throws Exception {
+        given(zoneService.updateZone(eq(2L), any())).willReturn(
+                ZoneUpdateResponse.builder().id(2L).name("회의실A").zoneType(ZoneType.AREA).parentId(1L).build());
+
+        String body = objectMapper.writeValueAsString(Map.of("parentId", 1));
+
+        mockMvc.perform(put("/api/v1/zones/2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.parentId").value(1));
+    }
+
+    @Test
+    @DisplayName("PUT /zones/{id} — clearParent=true → 200 (deserialize 회귀 방지 핵심)")
+    @WithMockAdminUser
+    void update_clearParentTrue_200() throws Exception {
+        given(zoneService.updateZone(eq(3L), any())).willReturn(
+                ZoneUpdateResponse.builder().id(3L).name("창고").zoneType(ZoneType.AREA).build());
+
+        String body = objectMapper.writeValueAsString(Map.of("clearParent", true));
+
+        mockMvc.perform(put("/api/v1/zones/3")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("success"));
+    }
+
+    @Test
+    @DisplayName("PUT /zones/{id} — 전체 필드 (parentId=null + clearParent=true) → 200")
+    @WithMockAdminUser
+    void update_allFields_200() throws Exception {
+        given(zoneService.updateZone(eq(4L), any())).willReturn(
+                ZoneUpdateResponse.builder().id(4L).name("x").zoneType(ZoneType.ROOM).description("y").build());
+
+        String body = "{\"name\":\"x\",\"zoneType\":\"ROOM\",\"parentId\":null,\"clearParent\":true,\"description\":\"y\"}";
+
+        mockMvc.perform(put("/api/v1/zones/4")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.zoneType").value("ROOM"))
+                .andExpect(jsonPath("$.data.description").value("y"));
+    }
+
+    @Test
+    @DisplayName("PUT /zones/{id} — 빈 body {} → 200 (partial update 회귀 방지)")
+    @WithMockAdminUser
+    void update_emptyBody_200() throws Exception {
+        given(zoneService.updateZone(eq(5L), any())).willReturn(
+                ZoneUpdateResponse.builder().id(5L).name("기존").zoneType(ZoneType.FLOOR).build());
+
+        mockMvc.perform(put("/api/v1/zones/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("success"));
+    }
 }
