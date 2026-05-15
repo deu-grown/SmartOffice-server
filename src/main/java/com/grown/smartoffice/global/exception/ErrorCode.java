@@ -39,6 +39,8 @@ public enum ErrorCode {
     RESERVATION_NOT_FOUND(404, "예약 정보를 찾을 수 없습니다."),
     POWER_DATA_NOT_FOUND(404, "해당 월 전력 집계 데이터가 없습니다."),
     PARKING_SPOT_NOT_FOUND(404, "주차면을 찾을 수 없습니다."),
+    VEHICLE_NOT_FOUND(404, "차량을 찾을 수 없습니다."),
+    PARKING_RESERVATION_NOT_FOUND(404, "주차 예약을 찾을 수 없습니다."),
 
     // ── 400 Bad Request (Zone) ────────────────────────────
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
@@ -66,6 +68,7 @@ public enum ErrorCode {
     DUPLICATE_ASSET_NUMBER(409, "이미 사용 중인 자산 번호입니다."),
     DUPLICATE_SPOT_NUMBER(409, "동일 구역 내 중복된 주차면 번호입니다."),
     DUPLICATE_SPOT_POSITION(409, "동일 구역 내 중복된 주차면 좌표입니다."),
+    DUPLICATE_PLATE_NUMBER(409, "이미 등록된 차량 번호판입니다."),
     DEVICE_ALREADY_MAPPED(409, "이미 다른 주차면에 매핑된 장치입니다."),
     RESERVATION_TIME_CONFLICT(400, "해당 시간대에 이미 예약이 존재합니다."),
     RESERVATION_ALREADY_CANCELLED(400, "이미 취소된 예약입니다."),
