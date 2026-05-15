@@ -1,5 +1,6 @@
 package com.grown.smartoffice.domain.parking.repository;
 
+import com.grown.smartoffice.domain.parking.dto.ParkingZoneProjection;
 import com.grown.smartoffice.domain.parking.entity.ParkingSpot;
 import com.grown.smartoffice.domain.parking.entity.SpotStatus;
 import com.grown.smartoffice.domain.parking.entity.SpotType;
@@ -58,4 +59,16 @@ public interface ParkingSpotRepository extends JpaRepository<ParkingSpot, Long> 
     long countByZone_ZoneId(Long zoneId);
 
     long countByZone_ZoneIdAndOccupied(Long zoneId, boolean occupied);
+
+    @Query("""
+            SELECT s.zone.zoneId AS zoneId,
+                   s.zone.zoneName AS zoneName,
+                   s.zone.zoneType AS zoneType,
+                   COUNT(s) AS totalSpots,
+                   SUM(CASE WHEN s.occupied = true THEN 1L ELSE 0L END) AS occupiedSpots
+            FROM ParkingSpot s
+            GROUP BY s.zone.zoneId, s.zone.zoneName, s.zone.zoneType
+            ORDER BY s.zone.zoneId
+            """)
+    List<ParkingZoneProjection> findParkingZones();
 }

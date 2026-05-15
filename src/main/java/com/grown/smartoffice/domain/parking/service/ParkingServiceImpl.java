@@ -99,6 +99,20 @@ public class ParkingServiceImpl implements ParkingService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ParkingZoneListResponse> getParkingZones() {
+        return parkingSpotRepository.findParkingZones().stream()
+                .map(p -> ParkingZoneListResponse.builder()
+                        .zoneId(p.getZoneId())
+                        .zoneName(p.getZoneName())
+                        .zoneType(p.getZoneType())
+                        .totalSpots(p.getTotalSpots())
+                        .occupiedSpots(p.getOccupiedSpots())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ParkingZoneSummaryResponse getZoneSummary(Long zoneId) {
         Zone zone = zoneRepository.findById(zoneId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ZONE_NOT_FOUND));

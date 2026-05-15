@@ -14,6 +14,8 @@ public interface ParkingService {
 
     List<ParkingSpotResponse> getSpots(Long zoneId, String spotType, String status);
 
+    List<ParkingZoneListResponse> getParkingZones();
+
     ParkingZoneSummaryResponse getZoneSummary(Long zoneId);
 
     ParkingZoneMapResponse getZoneMap(Long zoneId);
