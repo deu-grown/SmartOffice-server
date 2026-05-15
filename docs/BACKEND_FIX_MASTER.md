@@ -300,11 +300,9 @@
 |------|------|------|----------|------|------|-----------|------|
 | 마스터플랜 | 단일 sprint 정책 전환 | 완료 | (본 docs 커밋) | 2026-05-15 | 2026-05-15 | — | 본 문서 |
 | — | #13 zone PUT deserialize | 완료 | `a32d146` (PR #27) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | sprint 단일화 전 별도 PR 머지 완료. 옵션 A + Zone.update() partial update null 가드 동봉 |
-| 1 | #7 dashboard summary 500 (1-A 진단) | 대기 | — | — | — | — | 별도 plan mode 세션 |
-| 1 | #7 (1-B 수정) | 대기 | — | — | — | — | 1-A 완료 후 |
-| 1 | #11 power hourly 500 (1-A 진단) | 대기 | — | — | — | — | 별도 plan mode 세션 |
-| 1 | #11 (1-B 수정) | 대기 | — | — | — | — | 1-A 완료 후 |
-| 1 | 묶음 1 시각 검증 | 대기 | — | — | — | — | /dashboard KPI 4종 + PowerHourlyChart 복원 |
+| 1 | #7 dashboard summary 500 | 완료 | `d96e77d` (fix) + `5edb416` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `DeviceRepository.countByDeviceStatus` 시그니처 String → DeviceStatus enum (Hibernate 7.2.7 type mismatch 가 진짜 원인). 데이터 없음 케이스 단위 테스트 추가 |
+| 1 | #11 power hourly 500 | 완료 | `bfe28be` (fix) + `4a8d744` (test) | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | `findHourlyPowerProjection` GROUP BY DATE_FORMAT 패턴 SELECT 와 통일 (only_full_group_by 가 진짜 원인, 마스터플랜 가설 1 projection 매핑은 무관). PowerServiceIntegrationTest 신설 |
+| 1 | 묶음 1 시각 검증 | 완료 | — | 2026-05-15 | 2026-05-15 | 통과 (2026-05-15) | /dashboard KPI 4종 (현재 출근 0/10·오늘 예약 5·활성 장치 18·전체 사용자 10) + /building 시간별 전력 + /zones 전력 탭 복원 |
 | 2 | #8 V9 ALLOW→APPROVED | 대기 | — | — | — | — | Flyway 마이그레이션 |
 | 2 | #16 parking_spots V10 UNIQUE + null XOR | 대기 | — | — | — | — | Flyway + Service 검증 + DTO 검증 |
 | 2 | 묶음 2 시각 검증 | 대기 | — | — | — | — | /access-logs APPROVED 일관성 + /parking-spots 충돌 시도 |

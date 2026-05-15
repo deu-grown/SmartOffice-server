@@ -163,6 +163,8 @@ curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/dashboard
 
 **출처 세션**: `SmartOffice-web` 플랜 3-1 묶음 2 백엔드 curl 검증 (2026-05-14).
 
+**처리 완료**: 백엔드 수정 sprint 묶음 1 (`d96e77d` fix + `5edb416` test, 2026-05-15) — `DeviceRepository.countByDeviceStatus(String)` ↔ `Device.deviceStatus` enum 타입 불일치 (Hibernate 7.2.7 InvalidDataAccessApiUsageException) 가 진짜 원인. 시그니처를 `DeviceStatus` enum 으로 변경 + `DashboardService.getSummary` 호출도 `DeviceStatus.ACTIVE` enum 으로 변경. curl `GET /dashboard/summary` 200 + 4 필드 모두 정수 (`{activeDevices:18, todayReservations:5, totalUsers:10, pendingApprovals:0}`). web `/dashboard` KPI 4종 (현재 출근 0/10, 오늘 예약 5, 활성 장치 18, 전체 사용자 10) 복원 시각 검증 통과. `DashboardServiceTest.getSummary_emptyData` 데이터 없음 케이스 단위 테스트 추가.
+
 ---
 
 ## 8. (중) `access_logs.auth_result` 시드 데이터 정합성 — V5 의 `ALLOW` 값 잔존
@@ -330,6 +332,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 **우선순위**: 상. 본 플랜의 `PowerHourlyChart` 시각화 핵심 기능이 비활성 상태. 시연 직전 결함.
 
 **출처 세션**: `SmartOffice-web` 플랜 3-2 묶음 4 종료 curl 검증 (2026-05-14).
+
+**처리 완료**: 백엔드 수정 sprint 묶음 1 (`bfe28be` fix + `4a8d744` test, 2026-05-15) — 마스터플랜 가설 1 (interface projection snake_case alias 매핑) 은 결함 아니었음. 실제 원인은 `findHourlyPowerProjection` nativeQuery 의 SELECT `DATE_FORMAT(sl.logged_at, '%Y-%m-%dT%H:00:00') AS hour_at` ↔ GROUP BY `DATE_FORMAT(sl.logged_at, '%Y-%m-%d %H')` 패턴 불일치 → MySQL `only_full_group_by` 모드에서 Expression #4 비집계 컬럼 거부 (SQLSyntaxErrorException). GROUP BY 패턴을 SELECT 와 정확히 동일한 `'%Y-%m-%dT%H:00:00'` 로 통일. 클라이언트 fmt parser 영향 0. curl `GET /power/zones/5/hourly` 200 + `logs[]` 9건 정상 (zone 5 개발팀 좌석, device 9 개발팀 전력미터, hourAt 패턴 `yyyy-MM-ddTHH:00:00`). web `/building` 시간별 전력 사용량 + `/zones` 전력 탭 복원 시각 검증 통과. `PowerServiceIntegrationTest` 신설 (Testcontainers MySQL + V7/V8 시드, zone 5/2 hourly + ZONE_NOT_FOUND 3 시나리오).
 
 ---
 
