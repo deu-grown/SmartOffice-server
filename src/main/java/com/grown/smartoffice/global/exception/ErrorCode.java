@@ -44,6 +44,7 @@ public enum ErrorCode {
     INVALID_ZONE_HIERARCHY(400, "자기 자신 또는 하위 구역을 상위로 지정할 수 없습니다."),
     DEVICE_SPOT_MISMATCH(400, "장치 ID와 주차면 매핑이 일치하지 않습니다."),
     INVALID_POSITION_PAIR(400, "주차면 좌표는 X/Y 둘 다 입력하거나 둘 다 비워야 합니다."),
+    INVALID_COMMAND_TYPE(400, "지원하지 않는 제어 명령 유형입니다."),
 
     // ── 409 Conflict ─────────────────────────────────────
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),

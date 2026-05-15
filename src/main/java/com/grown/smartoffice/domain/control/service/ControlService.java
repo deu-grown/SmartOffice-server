@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grown.smartoffice.domain.control.dto.*;
 import com.grown.smartoffice.domain.control.entity.ControlCommand;
+import com.grown.smartoffice.domain.control.entity.ControlCommandType;
 import com.grown.smartoffice.domain.control.entity.ControlStatus;
 import com.grown.smartoffice.domain.control.repository.ControlCommandRepository;
 import com.grown.smartoffice.domain.device.entity.Device;
@@ -47,8 +48,15 @@ public class ControlService {
         Device device = deviceRepository.findById(request.getDeviceId())
                 .orElseThrow(() -> new CustomException(ErrorCode.DEVICE_NOT_FOUND));
 
+        ControlCommandType commandType;
+        try {
+            commandType = ControlCommandType.valueOf(request.getCommand());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new CustomException(ErrorCode.INVALID_COMMAND_TYPE);
+        }
+
         Map<String, String> payloadMap = new HashMap<>();
-        payloadMap.put("command", request.getCommand());
+        payloadMap.put("command", commandType.name());
         payloadMap.put("value", request.getValue());
         payloadMap.put("deviceId", String.valueOf(device.getDevicesId()));
 
@@ -62,7 +70,7 @@ public class ControlService {
         ControlCommand controlCommand = ControlCommand.builder()
                 .zone(zone)
                 .device(device)
-                .commandType(request.getCommand())
+                .commandType(commandType)
                 .payload(payloadJson)
                 .status(ControlStatus.PENDING)
                 .build();

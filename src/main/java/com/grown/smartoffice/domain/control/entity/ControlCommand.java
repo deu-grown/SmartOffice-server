@@ -32,8 +32,9 @@ public class ControlCommand {
     @JoinColumn(name = "devices_id", nullable = false)
     private Device device;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "command_type", nullable = false, length = 15)
-    private String commandType;
+    private ControlCommandType commandType;
 
     @Column(name = "control_payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
@@ -50,7 +51,7 @@ public class ControlCommand {
     private LocalDateTime createdAt;
 
     @Builder
-    public ControlCommand(Zone zone, Device device, String commandType, String payload, ControlStatus status, LocalDateTime triggeredAt) {
+    public ControlCommand(Zone zone, Device device, ControlCommandType commandType, String payload, ControlStatus status, LocalDateTime triggeredAt) {
         this.zone = zone;
         this.device = device;
         this.commandType = commandType;

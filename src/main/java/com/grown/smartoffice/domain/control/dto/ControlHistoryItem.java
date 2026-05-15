@@ -1,6 +1,7 @@
 package com.grown.smartoffice.domain.control.dto;
 
 import com.grown.smartoffice.domain.control.entity.ControlCommand;
+import com.grown.smartoffice.domain.control.entity.ControlCommandType;
 import com.grown.smartoffice.domain.control.entity.ControlStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 public class ControlHistoryItem {
     private Long id;
     private Long deviceId;
-    private String command;
+    private ControlCommandType command;
     private ControlStatus status;
     private LocalDateTime requestTime;
 
