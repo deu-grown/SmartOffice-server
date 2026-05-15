@@ -46,7 +46,7 @@ class ControlCommandRepositoryTest extends RepositoryTestSupport {
 
     private ControlCommand cmd(Zone z, Device d, ControlStatus st, LocalDateTime trigAt) {
         return ControlCommand.builder().zone(z).device(d)
-                .commandType("AC").payload("{}").status(st).triggeredAt(trigAt).build();
+                .commandType(com.grown.smartoffice.domain.control.entity.ControlCommandType.AC).payload("{}").status(st).triggeredAt(trigAt).build();
     }
 
     @Test
